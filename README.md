@@ -1,1 +1,0 @@
-# carnet-stb-pilote
