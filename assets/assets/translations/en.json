@@ -17,12 +17,11 @@
     "years": "years",
     "none": "None"
   },
-  
   "menu": {
     "header": "My TSC Diary",
     "charter": "Consent & Charter",
-    "tand": "TAND Screening Checklist",
-    "care_plan": "My Medical Follow-up",
+    "tand": "Dépistage des comorbidités (TAND)",
+    "care_plan": "My Follow-up (Care Plan)",
     "treatments": "My Treatment Plan",
     "seizures": "My Epileptic Seizures",
     "visit": "Prepare for Medical Visit",
@@ -31,14 +30,94 @@
     "live_tsc": "Living with TSC",
     "care_team": "My Care Team"
   },
+  "monitoring": {
+    "page_title": "My Monitoring (TS-CARE Index)",
+    "intro_text": "This tool is not a medical device but an interactive guide. It was designed to help you check if your follow-up is in accordance with the official recommendations of the ",
+    "pnds_link": "PNDS (National Diagnostic and Care Protocol).",
+    "score_title": "TS-CARE Index",
+    "vigilance_title": "Identified points of vigilance:",
+    "vigilance_critical": "Vigilance: some critical exams (MRI/Kidney/CT) do not seem up to date.",
+    "interpretation": "Evaluation of adherence to medical recommendations (PNDS)",
+    "warn_eeg": "Neurology: Discuss the need for a follow-up EEG based on seizure activity.",
+    "warn_dermato": "Dermatology: A specialized evaluation should be considered in case of pain or discomfort.",
+    "warn_pneumo_doc": "Pulmonology: Pulmonary status insufficiently documented; check medical history.",
+    "warn_cardio_init": "Cardiology: Check the initial cardiac history.",
+    "mod_neuro": "🧠 Neurological Module",
+    "mod_nephro": "🩸 Nephrological Module",
+    "mod_dermato": "🧴 Dermatological Module",
+    "mod_pneumo": "🫁 Pulmonology Module",
+    "mod_ophtalmo": "👁️ Ophthalmology Module",
+    "mod_cardio": "❤️ Cardiology Module",
+    "mod_dentaire": "🦷 Dental Module",
+    "q1_1": "Do you or your child currently have seizures?",
+    "q1_2": "When was the last EEG?",
+    "q1_3": "Has a neuropsychiatric (TAND) screening been performed?",
+    "q1_5": "When was the last brain MRI?",
+    "q2_1": "Has kidney involvement related to TSC already been identified?",
+    "q2_2": "When was the last abdominal MRI or renal ultrasound?",
+    "q2_3": "When was the last blood and urine test (kidney function)?",
+    "q2_4": "When was blood pressure last measured?",
+    "q3_1": "Do you have one or more skin involvements related to TSC?",
+    "q4_1": "Have you ever consulted a pulmonologist for TSC follow-up?",
+    "q4_2": "Do you experience unusual shortness of breath or exertional dyspnea?",
+    "q4_3": "Have pulmonary cysts already been identified?",
+    "q4_4": "When was the last chest CT scan?",
+    "q4_5": "When was the last pulmonary function test (PFT)?",
+    "q4_6": "When was the last 6-minute walk test?",
+    "q5_1": "Have you had fundus lesions or vision disorders?",
+    "q5_2": "When was the last ophthalmological consultation?",
+    "q6_1": "Has a cardiac rhabdomyoma ever been diagnosed in your child?",
+    "q6_2": "Does your child have symptoms or heart failure?",
+    "q6_3": "When was the last cardiac ultrasound?",
+    "q6_4": "When was the last electrocardiogram (ECG)?",
+    "q7_1": "Has a dental panoramic X-ray already been performed?",
+    "q7_2": "When was the last dental consultation?",
+    "less_1y": "Less than a year ago",
+    "more_1y": "More than a year ago",
+    "1_3y": "Between 1 and 3 years ago",
+    "more_3y": "More than 3 years ago",
+    "less_3y": "Less than 3 years ago",
+    "less_2y": "Less than 2 years ago",
+    "2_3y": "Between 2 and 3 years ago",
+    "less_5y": "Less than 5 years ago",
+    "5_10y": "Between 5 and 10 years ago",
+    "more_10y": "More than 10 years ago",
+    "less_6m": "Less than 6 months ago",
+    "more_6m": "More than 6 months ago",
 
+    "score_satisfactory": "Your follow-up is generally good.",
+    "medical_advice_title": "Compliance advice (for information only):",
+    "disclaimer_text": "This information is provided for guidance according to PNDS. Consult your doctor to adapt these exams to your personal situation.",
+    "conclusion_ok": "✅ Organ follow-up complies with recommendations.",
+    "conclusion_warning": "⚠️ Vigilance: Follow-up needs to be optimized for this organ.",
+    "action_q1_2": "Discuss the benefit of a follow-up EEG.",
+    "action_q1_3": "Request an annual neuropsychiatric (TAND) screening.",
+    "action_q1_4": "Perform an initial baseline TAND screening.",
+    "action_q1_5": "Schedule a follow-up brain MRI (recommended every 1 to 3 years before age 25).",
+    "action_q2_2": "Schedule a follow-up renal imaging (MRI or Ultrasound).",
+    "action_q2_3": "Perform a blood and urine test (creatinine, proteinuria).",
+    "action_q2_4": "Have blood pressure checked.",
+    "action_q3_1": "Consult a dermatologist to evaluate skin lesions.",
+    "action_q4_1": "Perform a baseline consultation with a pulmonologist.",
+    "action_q4_2": "Investigate shortness of breath through a specialist consultation.",
+    "action_q4_4": "Update chest CT scan (recommended every 2-3 years if cysts present).",
+    "action_q4_5": "Perform pulmonary function tests (PFT).",
+    "action_q4_6": "Perform a 6-minute walk test.",
+    "action_q4_7": "Update surveillance chest CT scan (every 5-10 years).",
+    "action_q5_2": "Update ophthalmological check-up.",
+    "action_q6_3": "Schedule a follow-up cardiac ultrasound.",
+    "action_q6_4": "Perform an electrocardiogram (ECG).",
+    "action_q6_5": "Update cardiac ultrasound (rhabdomyoma follow-up).",
+    "action_q6_6": "Update ECG (rhabdomyoma follow-up).",
+    "action_q7_1": "Perform a baseline dental panoramic X-ray (before age 6).",
+    "action_q7_2": "Schedule a dental check-up (every 6 months)."
+  },
   "home": {
     "welcome_title": "Welcome to your TSC Tracking Diary",
     "welcome_text": "This application supports you daily in monitoring Tuberous Sclerosis Complex (TSC).",
     "beta_warning": "Evaluation version (Beta) - Data is stored locally on your device.",
     "partners": "OUR PARTNERS"
   },
-
   "tand": {
     "appbar_title": "TAND Checklist",
     "btn_draft": "Draft",
@@ -61,7 +140,6 @@
     "select_answer": "Select an answer",
     "if_yes": "If you answered YES to any of these questions:",
     "score": "Score",
-
     "step1_title": "01. Development (Age of acquisition)",
     "step1_intro": "Let's start by talking about {prenom}'s development to get an idea of their level. How old was {prenom} when {pronom}:",
     "q1_a_text": "a. smiled for the first time?",
@@ -71,7 +149,6 @@
     "q1_e_text": "e. used 2-word phrases or short sentences?",
     "q1_f_text": "f. was toilet trained during the day?",
     "q1_g_text": "g. was toilet trained at night?",
-
     "step2_title": "02. Current level",
     "step2_intro": "What is {prenom}'s current level regarding:",
     "q2_lang": "a. Language",
@@ -87,7 +164,6 @@
     "q2_mob_opt2": "needs significant help",
     "q2_mob_opt3": "some difficulties",
     "q2_mob_opt4": "fully mobile",
-
     "step3_title": "03. Behaviors",
     "step3_intro": "Let's talk about behaviors that might concern you. Has {prenom} ever had any of the following difficulties:",
     "q3_1": "Anxiety",
@@ -111,7 +187,6 @@
     "q3_19": "Sleep difficulties (falling asleep or waking up)",
     "q3_help1": "Have you had a comprehensive evaluation or help for this difficulty?",
     "q3_help2": "Would you like a more comprehensive evaluation or help for this?",
-
     "step4_title": "04. Psychiatric Diagnoses",
     "step4_intro": "Some problematic behaviors can combine to meet criteria for specific psychiatric disorders. Has {prenom} ever received a diagnosis of:",
     "q4_1": "Autism Spectrum Disorder (ASD), such as autism or Asperger syndrome",
@@ -122,7 +197,6 @@
     "q4_6": "Psychotic disorder, including schizophrenia",
     "q4_help1": "Have you had a comprehensive evaluation or help for this diagnosis?",
     "q4_help2": "Would you like a more comprehensive evaluation or help for this?",
-
     "step5_title": "05. Intellectual Development",
     "step5_info": "About half of people with TSC will have significant difficulties in their global intellectual development and may have an intellectual disability.",
     "q5_a": "a. Have you ever felt concerned about this for {prenom}?",
@@ -140,7 +214,6 @@
     "q5_c_opt2": "Mild to moderate intellectual disability",
     "q5_c_opt3": "Severe to profound intellectual disability",
     "q5_d": "d. Would you like a further evaluation or help for this?",
-
     "step6_title": "06. Academic Skills",
     "step6_info": "Many school-aged people with TSC have difficulties at school.",
     "step6_intro": "Does {prenom} have or has {pronom} had difficulties with the following:",
@@ -151,7 +224,6 @@
     "q6_help1": "Has {prenom} had a comprehensive evaluation or help for this?",
     "q6_help2": "Has {prenom} been offered additional support at school?",
     "q6_help3": "Would you like a further evaluation or help for {prenom}?",
-
     "step7_title": "07. Cognitive Skills",
     "step7_intro": "Most people with TSC will have difficulties with specific cognitive skills. Does {prenom} have difficulties with:",
     "q7_1": "a. Memory (remembering things that happened)",
@@ -162,7 +234,6 @@
     "q7_6": "f. Orientation skills (forgetting the date or where you are)",
     "q7_help1": "Has {prenom} had a comprehensive evaluation or help for this?",
     "q7_help2": "Would you like a further evaluation or help for these difficulties?",
-
     "step8_title": "08. Psychosocial Impact",
     "step8_intro": "Besides the difficulties mentioned above, TSC can have a significant impact on people's lives for other reasons. Does {prenom} have one or more of the following difficulties:",
     "q8_1": "a. Low self-esteem",
@@ -170,24 +241,19 @@
     "q8_3": "c. Very high level of stress between parents, leading to significant relationship difficulties",
     "q8_help1": "Has {prenom} and/or your family had an evaluation or help for this?",
     "q8_help2": "Would you like a further evaluation or help for this?",
-
     "step9_title": "09. Disruption Level (0 to 10)",
     "step9_intro": "Of all the difficulties discussed above, how much have they disrupted, troubled, or upset you/your children/your family? (0: Not at all, 10: Extremely)",
     "q9_slider": "Disruption level",
-
     "step10_title": "10. Your Priorities",
     "step10_intro": "Of all the concerns discussed above, what are your main priorities that you would like to work on next?",
     "q10_text": "What are your priorities?",
-
     "step11_title": "11. Other Concerns",
     "step11_intro": "Do you have any other concerns about TSC-Associated Neuropsychiatric Disorders that we haven't discussed in this checklist?",
     "q11_text": "Do you have any other unaddressed concerns?",
-
     "step12_title": "12. Interviewer Rating",
     "step12_intro": "Interviewer rating of the impact/burden on the individual/child/family? (0: Not at all, 10: Extremely)",
     "q12_slider": "Impact / burden on the family (0 to 10)"
   },
-
   "treatments": {
     "title": "Treatment Plan",
     "current_meds": "Current treatments for {}",
@@ -201,39 +267,33 @@
     "dialog_step3": "3. Instructions / Posology",
     "dialog_hint": "e.g. 1 pill in the morning, 1 in the evening..."
   },
-
-"seizures": {
-  "title": "My Epileptic Seizures",
-  "tab_add": "Add",
-  "tab_history": "History",
-  "tab_chart": "Evolution",
-  "input_time": "Time of seizure",
-  "input_date": "Date of seizure",
-  "input_type": "Seizure Type",
-  "input_context": "Context (e.g., Fever, Fatigue...)",
-  "input_duration": "Duration of seizure",
-  "input_cluster": "Number (if cluster)",
-  "emergency_actions": "Emergency actions taken",
-  "rescue_meds": "Rescue medication administration (Buccolam, Valium...)",
-  "call_doctor": "Call doctor / EMS",
-  "hospital_transfer": "Transfer to emergency room",
-  "save_seizure": "Save seizure",
-  "chart_meds": "Current medications",
-  "chart_freq": "Seizure frequency"
-},
-
-"understand_tsc": {
+  "seizures": {
+    "title": "My Epileptic Seizures",
+    "tab_add": "Add",
+    "tab_history": "History",
+    "tab_chart": "Evolution",
+    "input_time": "Time of seizure",
+    "input_date": "Date of seizure",
+    "input_type": "Seizure Type",
+    "input_context": "Context (e.g., Fever, Fatigue...)",
+    "input_duration": "Duration of seizure",
+    "input_cluster": "Number (if cluster)",
+    "emergency_actions": "Emergency actions taken",
+    "rescue_meds": "Rescue medication administration (Buccolam, Valium...)",
+    "call_doctor": "Call doctor / EMS",
+    "hospital_transfer": "Transfer to emergency room",
+    "save_seizure": "Save seizure",
+    "chart_meds": "Current medications",
+    "chart_freq": "Seizure frequency"
+  },
+  "understand_tsc": {
     "title": "Understanding TSC",
-    
     "sec1_title": "The basics of TSC",
     "sec1_text": "Tuberous Sclerosis Complex (TSC) is a rare genetic disease. It is part of the so-called neurocutaneous diseases, which can influence the development of certain tissues in the body. It is linked to a modification of genes that normally play an important role in controlling cell growth and organization.\n\nIn people with TSC, this control mechanism works less well. Certain cells can then multiply or organize in an unusual way, leading to the formation of small benign lesions called hamartomas. These lesions are not cancers: they are tissues made up of normal cells, but which have developed in a disorganized manner.\n\nToday, knowledge about TSC has progressed significantly. The biological mechanisms involved are better understood, in particular the role of a cellular signaling pathway called mTOR, which regulates cell growth.",
-    
     "sec2_title": "Transmission and genetics",
     "sec2_text": "The disease is caused by a modification of one of the two genes called TSC1 or TSC2. In about two-thirds of cases, this modification appears spontaneously, without any family history.\n\nIn other situations, the disease can be passed from parent to child in a mode called autosomal dominant transmission. This means that a person carrying the mutation can pass the disease to their child.",
-    
     "sec3_title": "Great variability of expression",
     "sec3_text": "An important feature of Tuberous Sclerosis Complex is its great variability of expression. Two people with the disease, even within the same family, can have very different manifestations.\n\nSome people show few signs and live with little impact on their daily lives, while others may require more regular medical follow-up.",
-    
     "sec4_title": "Management and hope",
     "sec4_text": "These advances have allowed the development of targeted treatments and adapted follow-up approaches.\n\nManagement is generally based on regular and multidisciplinary medical follow-up, in order to best support each person according to their needs. Patient associations also play an essential role by providing information, support, and sharing of experiences to the families concerned.\n\nEven if TSC is a chronic disease, progress in research and management makes it possible today to considerably improve the quality of life and prospects of the people concerned."
   },
@@ -242,7 +302,6 @@
     "patient_followup": "{nom}'s Follow-up ({age} years old)",
     "algorithm_desc": "This algorithm is based on international medical recommendations (Consensus Guidelines) to indicate the exams to schedule.",
     "check_updated": "Check if your follow-up is up to date",
-    
     "opt_less_1_year": "Less than a year ago",
     "opt_more_1_year": "More than a year ago",
     "opt_more_3_years": "More than 3 years ago",
@@ -251,7 +310,6 @@
     "opt_yes_less_5_years": "Yes, less than 5 years ago",
     "opt_yes_more_5_years": "Yes, more than 5 years ago",
     "opt_never": "Never",
-
     "neuro_title": "🧠 Neurological Follow-up",
     "neuro_q1": "Have you had any epileptic seizures recently?",
     "neuro_q1_orange": "During an appointment with your neurologist, ask if an EEG is recommended.",
@@ -261,7 +319,6 @@
     "neuro_q2_orange_adult": "In adulthood, MRIs are less frequent. Ask your doctor for advice.",
     "neuro_q2_orange_young": "Check if a follow-up MRI is scheduled soon.",
     "neuro_q2_green": "Brain imaging is up to date.",
-
     "nephro_title": "🩸 Nephrological Follow-up",
     "nephro_q1": "When was your last renal imaging (MRI/CT/Ultrasound)?",
     "nephro_q1_red": "Abdominal imaging every 1 to 3 years is highly recommended.",
@@ -270,12 +327,10 @@
     "nephro_q2": "When was your last blood test (renal function / GFR)?",
     "nephro_q2_orange": "An evaluation of renal function and blood pressure is recommended once a year.",
     "nephro_q2_green": "Biological check-up is up to date.",
-
     "dermato_title": "🧴 Dermatological Follow-up",
     "dermato_q1": "Do you have any skin manifestations (angiofibromas, etc.)?",
     "dermato_q1_orange": "An annual consultation with a specialized dermatologist is recommended.",
     "dermato_q1_green": "Simple monitoring. Report any new lesions.",
-
     "pneumo_title": "🫁 Pneumological Follow-up",
     "pneumo_q1": "Do you have exertional dyspnea, unexplained shortness of breath, or chest pain?",
     "pneumo_q1_red": "Talk to your doctor promptly to screen for potential lung involvement (LAM).",
@@ -284,7 +339,6 @@
     "pneumo_q2_red": "A baseline scan is recommended in adult women (often around age 18 or at adult diagnosis).",
     "pneumo_q2_orange": "Ask if a new scan is necessary based on your symptoms.",
     "pneumo_q2_green": "Lung screening is up to date.",
-
     "dentist_title": "🦷 Dental Follow-up",
     "dentist_q1": "When was your last dental check-up?",
     "dentist_q1_orange": "A check-up every 6 months is recommended to monitor enamel and gums.",

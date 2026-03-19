@@ -1331,31 +1331,17 @@ class PageMonSuivi extends StatefulWidget {
 }
 
 class _PageMonSuiviState extends State<PageMonSuivi> {
-  // Stockage des réponses du patient (Clé -> Valeur sélectionnée)
   Map<String, String> reponses = {};
 
-  // Poids des domaines pour le calcul du Score TS-CARE
   static const Map<String, int> poidsDomaine = {
-    'neuro': 3,
-    'nephro': 3,
-    'pneumo': 3,
-    'tand': 2,
-    'cardio': 2,
-    'ophtalmo': 1,
-    'dermato': 1,
-    'dentaire': 1,
+    'neuro': 3, 'nephro': 3, 'pneumo': 3, 'tand': 2, 'cardio': 2, 'ophtalmo': 1, 'dermato': 1, 'dentaire': 1,
   };
 
-  // Variables dynamiques de l'algorithme
   double scoreTsCare = -1.0;
   bool alertePrioritaire = false;
   List<Map<String, String>> avertissements = [];
 
-  // ==========================================
-  // MOTEUR ALGORITHMIQUE TS-CARE
-  // ==========================================
   void _calculerScoreEtAlertes() {
-    // 1. Initialisation des compteurs par domaine
     double scoreNeuro = 0; int nNeuro = 0;
     double scoreTand = 0; int nTand = 0;
     double scoreNephro = 0; int nNephro = 0;
@@ -1368,523 +1354,340 @@ class _PageMonSuiviState extends State<PageMonSuivi> {
     avertissements.clear();
     alertePrioritaire = false;
 
-    // Fonction locale pour ajouter un score
-    void ajouterPoint(String domaine, String? couleur) {
-      if (couleur == null) return;
-      double point = (couleur == 'green') ? 1.0 : ((couleur == 'orange') ? 0.5 : 0.0);
-      
+    void ajouterPoint(String domaine, String? id) {
+      if (id == null) return;
+      double pt = (id == 'green') ? 1.0 : ((id == 'orange') ? 0.5 : 0.0);
       switch (domaine) {
-        case 'neuro': scoreNeuro += point; nNeuro++; break;
-        case 'tand': scoreTand += point; nTand++; break;
-        case 'nephro': scoreNephro += point; nNephro++; break;
-        case 'dermato': scoreDermato += point; nDermato++; break;
-        case 'pneumo': scorePneumo += point; nPneumo++; break;
-        case 'ophtalmo': scoreOphtalmo += point; nOphtalmo++; break;
-        case 'cardio': scoreCardio += point; nCardio++; break;
-        case 'dentaire': scoreDentaire += point; nDentaire++; break;
+        case 'neuro': scoreNeuro += pt; nNeuro++; break;
+        case 'tand': scoreTand += pt; nTand++; break;
+        case 'nephro': scoreNephro += pt; nNephro++; break;
+        case 'dermato': scoreDermato += pt; nDermato++; break;
+        case 'pneumo': scorePneumo += pt; nPneumo++; break;
+        case 'ophtalmo': scoreOphtalmo += pt; nOphtalmo++; break;
+        case 'cardio': scoreCardio += pt; nCardio++; break;
+        case 'dentaire': scoreDentaire += pt; nDentaire++; break;
       }
     }
 
     // --- 1. NEUROLOGIE ---
-    if (reponses['q1_1'] == 'Oui') {
+    if (reponses['q1_1'] == 'yes') {
       ajouterPoint('neuro', reponses['q1_2']);
-      if (reponses['q1_2'] == 'orange') avertissements.add({'couleur': 'orange', 'message': 'Neurologie : Discuter l’indication d’un EEG de contrôle selon l’activité épileptique, l’évolution clinique et la stratégie thérapeutique.'});
+      if (reponses['q1_2'] == 'orange') avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_eeg'.tr()});
     }
     if (widget.agePatient <= 25) ajouterPoint('tand', reponses['q1_3']); else ajouterPoint('tand', reponses['q1_4']);
-    
     ajouterPoint('neuro', reponses['q1_5']);
-    if (reponses['q1_5'] == 'red') alertePrioritaire = true; // Alerte rouge absolue IRM
+    if (reponses['q1_5'] == 'red') alertePrioritaire = true;
 
     // --- 2. NÉPHROLOGIE ---
     ajouterPoint('nephro', reponses['q2_2']);
-    if (reponses['q2_2'] == 'red') alertePrioritaire = true; // Alerte rouge absolue Rein
+    if (reponses['q2_2'] == 'red') alertePrioritaire = true;
     ajouterPoint('nephro', reponses['q2_3']);
     ajouterPoint('nephro', reponses['q2_4']);
 
     // --- 3. DERMATOLOGIE ---
-    ajouterPoint('dermato', reponses['q3_1']);
-    if (reponses['q3_1'] == 'orange') avertissements.add({'couleur': 'orange', 'message': 'Dermatologie : Une évaluation dermatologique spécialisée est à envisager en cas de douleur, saignement, gêne fonctionnelle, retentissement esthétique ou social.'});
+    if (reponses['q3_1'] == 'yes') {
+      ajouterPoint('dermato', 'orange');
+      avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_dermato'.tr()});
+    } else if (reponses['q3_1'] == 'no') {
+      ajouterPoint('dermato', 'green');
+    }
 
-    // --- 4. PNEUMOLOGIE ---
+    // --- 4. PNEUMOLOGIE (>= 18 ans) ---
     if (widget.agePatient >= 18) {
-      if (widget.sexePatient == 'Féminin') ajouterPoint('pneumo', reponses['q4_1']);
-      if (widget.sexePatient == 'Masculin') {
+      bool isFemme = widget.sexePatient.toLowerCase().contains('fem');
+      if (isFemme) ajouterPoint('pneumo', reponses['q4_1']);
+      else {
         ajouterPoint('pneumo', reponses['q4_2']);
-        if (reponses['q4_2'] == 'orange') alertePrioritaire = true; // Dyspnée non explorée
+        if (reponses['q4_2'] == 'orange') alertePrioritaire = true;
       }
 
-      if (reponses['q4_3'] == 'Oui') {
+      if (reponses['q4_3'] == 'yes') {
         ajouterPoint('pneumo', reponses['q4_4']);
-        if (reponses['q4_4'] == 'red') alertePrioritaire = true; // Alerte rouge Scanner
+        if (reponses['q4_4'] == 'red') alertePrioritaire = true;
         ajouterPoint('pneumo', reponses['q4_5']);
         ajouterPoint('pneumo', reponses['q4_6']);
-      } else if (reponses['q4_3'] == 'Non') {
+      } else if (reponses['q4_3'] == 'no') {
         ajouterPoint('pneumo', reponses['q4_7']);
-        if (reponses['q4_7'] == 'red') alertePrioritaire = true; // Alerte rouge Scanner
-      } else if (reponses['q4_3'] == 'Je ne sais pas') {
-        scorePneumo += 0.5; nPneumo++; // Implicite Orange
-        avertissements.add({'couleur': 'orange', 'message': 'Pneumologie : Statut pulmonaire insuffisamment documenté ; vérifier les antécédents radiologiques pulmonaires.'});
+        if (reponses['q4_7'] == 'red') alertePrioritaire = true;
+      } else if (reponses['q4_3'] == 'unknown') {
+        avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_pneumo_doc'.tr()});
       }
     }
 
     // --- 5. OPHTALMOLOGIE ---
-    if (reponses['q5_1'] == 'Oui') {
-      ajouterPoint('ophtalmo', reponses['q5_2']);
-    } else if (reponses['q5_1'] == 'Non') {
-      scoreOphtalmo += 1.0; nOphtalmo++; // Implicite Vert
-    }
+    if (reponses['q5_1'] == 'yes') ajouterPoint('ophtalmo', reponses['q5_2']);
+    else if (reponses['q5_1'] == 'no') ajouterPoint('ophtalmo', 'green');
 
-    // --- 6. CARDIOLOGIE ---
+    // --- 6. CARDIOLOGIE (< 12 ans) ---
     if (widget.agePatient < 12) {
-      if (reponses['q6_1'] == 'Non') {
-        scoreCardio += 1.0; nCardio++; // Implicite Vert
-      } else if (reponses['q6_1'] == 'Je ne sais pas') {
-        scoreCardio += 0.5; nCardio++; // Implicite Orange
-        avertissements.add({'couleur': 'orange', 'message': 'Cardiologie : Vérifier l’histoire cardiaque initiale.'});
-      } else if (reponses['q6_1'] == 'Oui') {
-        if (reponses['q6_2'] == 'Oui') {
-          ajouterPoint('cardio', reponses['q6_3']);
-          ajouterPoint('cardio', reponses['q6_4']);
-        } else if (reponses['q6_2'] == 'Non') {
-          ajouterPoint('cardio', reponses['q6_5']);
-          ajouterPoint('cardio', reponses['q6_6']);
+      if (reponses['q6_1'] == 'unknown') avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_cardio_init'.tr()});
+      if (reponses['q6_1'] == 'yes') {
+        if (reponses['q6_2'] == 'yes') {
+          ajouterPoint('cardio', reponses['q6_3']); ajouterPoint('cardio', reponses['q6_4']);
+        } else {
+          ajouterPoint('cardio', reponses['q6_5']); ajouterPoint('cardio', reponses['q6_6']);
         }
-      }
+      } else if (reponses['q6_1'] == 'no') ajouterPoint('cardio', 'green');
     }
 
     // --- 7. DENTAIRE ---
     if (widget.agePatient <= 6) ajouterPoint('dentaire', reponses['q7_1']);
     ajouterPoint('dentaire', reponses['q7_2']);
 
-    // --- CALCUL FINAL DU SCORE PONDÉRÉ ---
-    double totalScore = 0;
-    int totalPoids = 0;
-    
+    double totalScore = 0; int totalPoids = 0;
     void appliquerPoids(String domaine, double score, int nItems) {
       if (nItems > 0) {
         totalScore += (score / nItems) * poidsDomaine[domaine]!;
         totalPoids += poidsDomaine[domaine]!;
       }
     }
-    
-    appliquerPoids('neuro', scoreNeuro, nNeuro);
-    appliquerPoids('tand', scoreTand, nTand);
-    appliquerPoids('nephro', scoreNephro, nNephro);
-    appliquerPoids('dermato', scoreDermato, nDermato);
-    appliquerPoids('pneumo', scorePneumo, nPneumo);
-    appliquerPoids('ophtalmo', scoreOphtalmo, nOphtalmo);
-    appliquerPoids('cardio', scoreCardio, nCardio);
-    appliquerPoids('dentaire', scoreDentaire, nDentaire);
+    appliquerPoids('neuro', scoreNeuro, nNeuro); appliquerPoids('tand', scoreTand, nTand);
+    appliquerPoids('nephro', scoreNephro, nNephro); appliquerPoids('dermato', scoreDermato, nDermato);
+    appliquerPoids('pneumo', scorePneumo, nPneumo); appliquerPoids('ophtalmo', scoreOphtalmo, nOphtalmo);
+    appliquerPoids('cardio', scoreCardio, nCardio); appliquerPoids('dentaire', scoreDentaire, nDentaire);
 
-    setState(() {
-      scoreTsCare = totalPoids == 0 ? -1.0 : totalScore / totalPoids;
-    });
+    setState(() { scoreTsCare = totalPoids == 0 ? -1.0 : totalScore / totalPoids; });
   }
 
-  // Interprétation textuelle
-  String _getInterpretationText() {
-    if (scoreTsCare == -1.0) return 'Remplissez le questionnaire pour générer votre indice TS-CARE.';
-    if (scoreTsCare >= 0.85) return "Votre suivi est très bien organisé.";
-    if (scoreTsCare >= 0.60) return "Votre suivi est globalement bon.";
-    if (scoreTsCare >= 0.40) return "Certains examens sont à mettre à jour.";
-    return "Votre suivi nécessite une mise à jour rapide.";
+  String _getInterpretation() {
+    if (scoreTsCare == -1.0) return 'monitoring.interpretation'.tr();
+    if (scoreTsCare >= 0.85) return 'tscare.score_optimal'.tr();
+    if (scoreTsCare >= 0.60) return 'tscare.score_satisfactory'.tr();
+    return 'tscare.score_insufficient'.tr();
+  }
+
+  Widget _buildModuleConclusion(List<String> questionsLiees) {
+    // On récupère les questions qui ne sont pas "green"
+    List<String> problemes = questionsLiees.where((q) => 
+      reponses.containsKey(q) && reponses[q] != 'green' && reponses[q] != 'yes'
+    ).toList();
+
+    if (problemes.isEmpty && !questionsLiees.any((q) => reponses.containsKey(q))) {
+      return const SizedBox.shrink();
+    }
+
+    bool isOk = problemes.isEmpty;
+    bool isCritical = questionsLiees.any((q) => reponses[q] == 'red');
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isOk ? Colors.green.withOpacity(0.05) : (isCritical ? Colors.red.withOpacity(0.05) : Colors.orange.withOpacity(0.05)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: isOk ? Colors.green : (isCritical ? Colors.red : Colors.orange), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Ligne de statut
+          Row(
+            children: [
+              Icon(isOk ? Icons.check_circle : Icons.info, color: isOk ? Colors.green : (isCritical ? Colors.red : Colors.orange)),
+              const SizedBox(width: 10),
+              Text(
+                isOk ? "monitoring.conclusion_ok".tr() : "monitoring.conclusion_warning".tr(),
+                style: TextStyle(fontWeight: FontWeight.bold, color: isOk ? Colors.green : (isCritical ? Colors.red : Colors.orange)),
+              ),
+            ],
+          ),
+          
+          // Détail des actions si non conforme
+          if (!isOk) ...[
+            const SizedBox(height: 12),
+            Text("monitoring.medical_advice_title".tr(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 5),
+            ...problemes.map((q) => Padding(
+              padding: const EdgeInsets.only(left: 8, top: 4),
+              child: Text("• ${('monitoring.action_' + q).tr()}", style: const TextStyle(fontSize: 13)),
+            )),
+            const Divider(height: 25),
+            // Phrase de prudence
+            Text(
+              "monitoring.disclaimer_text".tr(),
+              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.black54),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   Color _getScoreColor() {
+    if (scoreTsCare == -1.0) return Colors.grey;
     if (scoreTsCare >= 0.85) return Colors.green;
     if (scoreTsCare >= 0.60) return Colors.lightGreen;
     if (scoreTsCare >= 0.40) return Colors.orange;
     return Colors.red;
   }
 
-  // ==========================================
-  // INTERFACE UTILISATEUR (UI)
-  // ==========================================
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: const Text('Mon Suivi (Indice TS-CARE)'), 
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary
-      ),
+      appBar: AppBar(title: Text('monitoring.page_title'.tr())),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
-          
-          // --- NOUVEL EN-TÊTE PÉDAGOGIQUE (PNDS) ---
-          Card(
-            elevation: 0,
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: primaryTeal.withOpacity(0.3))
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.verified_user, color: primaryTeal, size: 28),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          "Aide au suivi personnalisé",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: darkNavy),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    "Cet outil n'est pas un dispositif médical mais un guide interactif. "
-                    "Il a été conçu pour vous aider à vérifier si votre suivi est en accord avec les recommandations officielles du ",
-                    style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.4),
-                  ),
-                  GestureDetector(
-                    onTap: () async {
-                      final Uri url = Uri.parse('https://www.has-sante.fr/jcms/p_3293728/fr/sclerose-tubereuse-de-bourneville');
-                      if (!await launchUrl(url)) {
-                        throw Exception('Could not launch $url');
-                      }
-                    },
-                    child: Text(
-                      "PNDS (Protocole National de Diagnostic et de Soins).",
-                      style: TextStyle(
-                        fontSize: 14,  
-                        fontWeight: FontWeight.bold
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Répondez aux questions pour générer votre indice TS-CARE et identifier les points de vigilance à aborder avec votre équipe médicale.",
-                    style: TextStyle(fontSize: 14, color: Colors.black54, fontStyle: FontStyle.italic),
-                  ),
-                  const SizedBox(height: 5),
-                  InkWell(
-                    onTap: () => launchUrl(Uri.parse('https://www.has-sante.fr/jcms/p_3293728/fr/sclerose-tubereuse-de-bourneville')),
-                    child: Text(
-                      "👉 Pour en savoir plus, consulter la fiche HAS",
-                      style: TextStyle(fontSize: 13, color: Colors.blue.shade700, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _buildHeader(),
           const SizedBox(height: 20),
-          
-          // --- 1. JAUGE TS-CARE ---
-          Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  Text('Indice TS-CARE', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade800)),
-                  const SizedBox(height: 5),
-                  const Text("Évaluation de l'adhésion aux recommandations médicales (PNDS)", textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 20),
-                  Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(height: 100, width: 100, child: CircularProgressIndicator(value: scoreTsCare == -1 ? 0 : scoreTsCare, backgroundColor: Colors.grey.shade200, color: scoreTsCare == -1 ? Colors.grey : _getScoreColor(), strokeWidth: 10)),
-                      Text(scoreTsCare == -1 ? '--%' : '${(scoreTsCare * 100).round()}%', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: scoreTsCare == -1 ? Colors.grey : _getScoreColor())),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: (scoreTsCare == -1 ? Colors.grey : _getScoreColor()).withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                    child: Text(_getInterpretationText(), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: scoreTsCare == -1 ? Colors.grey : _getScoreColor())),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          _buildJaugeCard(),
           const SizedBox(height: 20),
 
-          // --- 2. ALERTES PRIORITAIRES ---
-          if (alertePrioritaire) ...[
-            Container(
-              padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.red.shade100, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.red.shade400, width: 2)),
-              child: Row(
-                children: [
-                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 40), const SizedBox(width: 15),
-                  const Expanded(child: Text("Certains éléments importants de votre suivi ne sont pas à jour. Il est recommandé de consulter rapidement votre spécialiste.", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold))),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-
-          if (avertissements.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.orange.shade300)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Points à discuter avec le médecin :', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.orange)),
-                  const SizedBox(height: 10),
-                  ...avertissements.map((avert) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Icon(avert['couleur'] == 'red' ? Icons.error : Icons.info, color: avert['couleur'] == 'red' ? Colors.red : Colors.orange, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(avert['message']!, style: const TextStyle(fontSize: 13))),
-                    ]),
-                  )),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-          ],
-          
-          const Divider(), const SizedBox(height: 10),
-
-          // --- 3. QUESTIONNAIRE CLINIQUE ---
-
-          _construireSection('🧠 Module Neurologique', [
-            _passerelleBloc('q1_1', 'Vous ou votre enfant présentez-vous actuellement des crises d’épilepsie ?', ['Oui', 'Non']),
-            if (reponses['q1_1'] == 'Oui')
-              _scoreBloc('q1_2', 'Depuis quand date le dernier EEG ?', [
-                {'label': 'Il y a moins d’un an', 'color': 'green', 'msg': 'Votre suivi EEG est à jour. Continuez votre suivi régulier avec votre neurologue.'},
-                {'label': 'Il y a plus d’un an', 'color': 'orange', 'msg': 'Votre dernier EEG date de plus d’un an. Lors de votre prochain rendez-vous, demandez si un contrôle est nécessaire.'},
-              ]),
-            
+          // --- MODULE 1 : NEURO ---
+          _construireSection('monitoring.mod_neuro'.tr(), [
+            _passerelle('q1_1', 'monitoring.q1_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+            if (reponses['q1_1'] == 'yes')
+              _score('q1_2', 'monitoring.q1_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
             if (widget.agePatient <= 25)
-              _scoreBloc('q1_3', 'Un dépistage des désordres neuropsychiatriques associés à la STB a-t-il été réalisé ?', [
-                {'label': 'Il y a moins d’un an', 'color': 'green', 'msg': 'Le dépistage des difficultés cognitives, comportementales ou émotionnelles est à jour.'},
-                {'label': 'Il y a plus d’un an', 'color': 'orange', 'msg': 'Un dépistage des difficultés cognitives et comportementales pourrait être utile.'},
-              ])
+              _score('q1_3', 'monitoring.q1_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}])
             else
-              _scoreBloc('q1_4', 'Avez-vous déjà bénéficié d’un dépistage des désordres neuropsychiatriques associés à la STB ?', [
-                {'label': 'Oui', 'color': 'green', 'msg': 'Le dépistage des difficultés cognitives, comportementales ou émotionnelles est à jour.'},
-                {'label': 'Non', 'color': 'orange', 'msg': 'Un dépistage des difficultés cognitives et comportementales pourrait être utile.'},
-              ]),
+              _score('q1_4', 'monitoring.q1_3'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}]),
+            _score('q1_5', 'monitoring.q1_5'.tr(), widget.agePatient <= 25 
+              ? [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]
+              : [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_3y'.tr()}]),
+            _buildModuleConclusion(['q1_2', 'q1_3', 'q1_5']), 
+            ], 'key_neuro'),
 
-            _scoreBloc('q1_5', 'Depuis quand date la dernière IRM cérébrale ?', widget.agePatient <= 25 ? [
-              {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Votre IRM cérébrale est à jour.'},
-              {'label': 'Entre 1 et 3 ans', 'color': 'orange', 'msg': 'Votre dernière IRM commence à dater. Discutez avec votre médecin de la nécessité d’un contrôle.'},
-              {'label': 'Plus de 3 ans', 'color': 'red', 'msg': 'Votre IRM cérébrale n’est pas à jour. Il est important d’en discuter rapidement avec votre spécialiste.'},
-            ] : [
-              {'label': 'Moins de 3 ans', 'color': 'green', 'msg': 'Votre IRM cérébrale est à jour.'},
-              {'label': 'Plus de 3 ans', 'color': 'orange', 'msg': 'Votre dernière IRM commence à dater. Discutez avec votre médecin de la nécessité d’un contrôle.'},
-            ]),
-          ]),
+          // --- MODULE 2 : NEPHRO ---
+          _construireSection('monitoring.mod_nephro'.tr(), [
+            _passerelle('q2_1', 'monitoring.q2_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
+            _score('q2_2', 'monitoring.q2_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
+            _score('q2_3', 'monitoring.q2_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+            _score('q2_4', 'monitoring.q2_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+            _buildModuleConclusion(['q2_1', 'q2_2', 'q2_3','q2_4']), 
+            ], 'key_nephro'),
 
-          _construireSection('🩸 Module Néphrologique', [
-            _passerelleBloc('q2_1', 'A-t-on déjà mis en évidence une atteinte rénale liée à la STB ?', ['Oui', 'Non', 'Je ne sais pas']),
-            _scoreBloc('q2_2', 'Depuis quand date la dernière IRM abdominale ou échographie rénale ?', [
-              {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Votre suivi rénal est à jour.'},
-              {'label': 'Entre 1 et 3 ans', 'color': 'orange', 'msg': 'Un contrôle rénal pourrait être nécessaire. Parlez-en à votre médecin.'},
-              {'label': 'Plus de 3 ans', 'color': 'red', 'msg': 'Votre suivi rénal n’est pas à jour. Il est important de programmer un examen rapidement.'},
-            ]),
-            _scoreBloc('q2_3', 'Depuis quand date le dernier bilan sanguin et urinaire (fonction rénale) ?', [
-              {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Votre fonction rénale est surveillée régulièrement.'},
-              {'label': 'Plus d’un an', 'color': 'orange', 'msg': 'Un bilan rénal est recommandé.'},
-            ]),
-            _scoreBloc('q2_4', 'Depuis quand la pression artérielle a-t-elle été mesurée ?', [
-              {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Votre tension artérielle est surveillée régulièrement.'},
-              {'label': 'Plus d’un an', 'color': 'orange', 'msg': 'Une mesure de votre tension artérielle est recommandée.'},
-            ]),
-          ]),
+          // --- MODULE 3 : DERMATO ---
+          _construireSection('monitoring.mod_dermato'.tr(), [
+            _passerelle('q3_1', 'monitoring.q3_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+            _buildModuleConclusion(['q3_1']),  
+            ], 'key_dermato'),
 
-          _construireSection('🧴 Module Dermatologique', [
-            _scoreBloc('q3_1', 'Vous ou votre enfant présentez-vous une ou plusieurs atteintes cutanées liées à la STB ?', [
-              {'label': 'Non', 'color': 'green', 'msg': 'Aucune surveillance dermatologique particulière n’est nécessaire actuellement.'},
-              {'label': 'Oui', 'color': 'orange', 'msg': 'Un avis dermatologique peut être utile en cas de gêne ou douleur.'},
-            ]),
-          ]),
-
+          // --- MODULE 4 : PNEUMO (Branchements complexes) ---
           if (widget.agePatient >= 18)
-            _construireSection('🫁 Module Pneumologique', [
-              if (widget.sexePatient == 'Féminin')
-                _scoreBloc('q4_1', 'Avez-vous déjà consulté un pneumologue dans le cadre du suivi de la STB ?', [
-                  {'label': 'Oui', 'color': 'green', 'msg': 'Un suivi pneumologique a déjà été réalisé.'},
-                  {'label': 'Jamais', 'color': 'orange', 'msg': 'Une consultation pneumologique est recommandée au moins une fois.'},
-                ]),
-              if (widget.sexePatient == 'Masculin')
-                _scoreBloc('q4_2', 'Présentez-vous une dyspnée d’effort ou un essoufflement inhabituel ?', [
-                  {'label': 'Non', 'color': 'green', 'msg': 'Aucun symptôme respiratoire rapporté.'},
-                  {'label': 'Oui', 'color': 'orange', 'msg': 'Un essoufflement doit être exploré. Parlez-en à votre médecin.'},
-                ]),
+            _construireSection('monitoring.mod_pneumo'.tr(), [
+              if (widget.sexePatient.toLowerCase().contains('fem')) 
+                _score('q4_1', 'monitoring.q4_1'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}])
+              else 
+                _score('q4_2', 'monitoring.q4_2'.tr(), [{'id': 'orange', 'l': 'global.yes'.tr()}, {'id': 'green', 'l': 'global.no'.tr()}]),
               
-              _passerelleBloc('q4_3', 'A-t-on déjà mis en évidence des kystes pulmonaires ?', ['Oui', 'Non', 'Je ne sais pas']),
-              if (reponses['q4_3'] == 'Oui') ...[
-                _scoreBloc('q4_4', 'Depuis quand date le dernier scanner thoracique ?', [
-                  {'label': 'Moins de 2 ans', 'color': 'green', 'msg': 'Votre suivi pulmonaire est à jour.'},
-                  {'label': 'Entre 2 et 3 ans', 'color': 'orange', 'msg': 'Un contrôle pulmonaire pourrait être nécessaire.'},
-                  {'label': 'Plus de 3 ans', 'color': 'red', 'msg': 'Votre suivi pulmonaire n’est pas à jour. Il est recommandé de consulter.'},
-                ]),
-                _scoreBloc('q4_5', 'Depuis quand date la dernière exploration fonctionnelle respiratoire ?', [
-                  {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Votre fonction respiratoire est surveillée.'},
-                  {'label': 'Plus d’un an', 'color': 'orange', 'msg': 'Un contrôle respiratoire est recommandé.'},
-                ]),
-                _scoreBloc('q4_6', 'Depuis quand date le dernier test de marche de 6 minutes ?', [
-                  {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Votre fonction respiratoire est surveillée.'},
-                  {'label': 'Plus d’un an', 'color': 'orange', 'msg': 'Un contrôle respiratoire est recommandé.'},
-                ]),
-              ] else if (reponses['q4_3'] == 'Non') ...[
-                _scoreBloc('q4_7', 'Depuis quand date le dernier scanner thoracique ?', [
-                  {'label': 'Moins de 5 ans', 'color': 'green', 'msg': 'Votre suivi pulmonaire est à jour.'},
-                  {'label': 'Entre 5 et 10 ans', 'color': 'orange', 'msg': 'Un contrôle pulmonaire pourrait être nécessaire.'},
-                  {'label': 'Plus de 10 ans', 'color': 'red', 'msg': 'Votre suivi pulmonaire n’est pas à jour. Il est recommandé de consulter.'},
-                ]),
+              _passerelle('q4_3', 'monitoring.q4_3'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
+              
+              if (reponses['q4_3'] == 'yes') ...[
+                _score('q4_4', 'monitoring.q4_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_2y'.tr()}, {'id': 'orange', 'l': 'monitoring.2_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
+                _score('q4_5', 'monitoring.q4_5'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+                _score('q4_6', 'monitoring.q4_6'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+              ] else if (reponses['q4_3'] == 'no') ...[
+                _score('q4_7', 'monitoring.q4_7'.tr(), [{'id': 'green', 'l': 'monitoring.less_5y'.tr()}, {'id': 'orange', 'l': 'monitoring.5_10y'.tr()}, {'id': 'red', 'l': 'monitoring.more_10y'.tr()}]),
               ],
-            ]),
+            _buildModuleConclusion(['q4_1', 'q4_2', 'q4_3', 'q4_2', 'q4_4', 'q4_5', 'q4_6', 'q4_7']), 
+            ], 'key_pneumo'),
 
-          _construireSection('👁️ Module Ophtalmologique', [
-            _passerelleBloc('q5_1', 'Avez-vous présenté des lésions au fond d’œil ou des troubles de la vision ?', ['Oui', 'Non']),
-            if (reponses['q5_1'] == 'Oui')
-              _scoreBloc('q5_2', 'Depuis quand date la dernière consultation ophtalmologique ?', [
-                {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Votre suivi ophtalmologique est adapté.'},
-                {'label': 'Plus d’un an', 'color': 'orange', 'msg': 'Un contrôle ophtalmologique est recommandé.'},
-              ]),
-          ]),
+          // --- MODULE 5 : OPHTALMO ---
+          _construireSection('monitoring.mod_ophtalmo'.tr(), [
+            _passerelle('q5_1', 'monitoring.q5_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+            if (reponses['q5_1'] == 'yes')
+              _score('q5_2', 'monitoring.q5_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+            _buildModuleConclusion(['q5_1', 'q5_2']), 
+           ], 'key_ophtalmo'),
 
+          // --- MODULE 6 : CARDIO (< 12 ans) ---
           if (widget.agePatient < 12)
-            _construireSection('❤️ Module Cardiologique', [
-              _passerelleBloc('q6_1', 'A-t-on déjà diagnostiqué un rhabdomyome cardiaque chez votre enfant ?', ['Oui', 'Non', 'Je ne sais pas']),
-              if (reponses['q6_1'] == 'Oui') ...[
-                _passerelleBloc('q6_2', 'Votre enfant présente-t-il une insuffisance cardiaque ou des symptômes liés au rhabdomyome ?', ['Oui', 'Non']),
-                if (reponses['q6_2'] == 'Oui') ...[
-                  _scoreBloc('q6_3', 'Depuis quand date la dernière échographie cardiaque ?', [
-                    {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Le suivi cardiaque est à jour.'},
-                    {'label': 'Plus d’un an', 'color': 'orange', 'msg': 'Un contrôle cardiaque pourrait être nécessaire.'},
-                  ]),
-                  _scoreBloc('q6_4', 'Depuis quand date le dernier électrocardiogramme ?', [
-                    {'label': 'Moins de 3 ans', 'color': 'green', 'msg': 'Le suivi cardiaque est à jour.'},
-                    {'label': 'Plus de 3 ans', 'color': 'orange', 'msg': 'Un contrôle cardiaque pourrait être nécessaire.'},
-                  ]),
-                ] else if (reponses['q6_2'] == 'Non') ...[
-                  _scoreBloc('q6_5', 'Depuis quand date la dernière échographie cardiaque ?', [
-                    {'label': 'Moins d’un an', 'color': 'green', 'msg': 'Le suivi cardiaque est à jour.'},
-                    {'label': 'Entre 1 et 3 ans', 'color': 'orange', 'msg': 'Un contrôle cardiaque pourrait être nécessaire.'},
-                    {'label': 'Plus de 3 ans', 'color': 'red', 'msg': 'Le suivi cardiaque n’est pas à jour. Un avis spécialisé est recommandé.'},
-                  ]),
-                  _scoreBloc('q6_6', 'Depuis quand date le dernier électrocardiogramme ?', [
-                    {'label': 'Moins de 3 ans', 'color': 'green', 'msg': 'Le suivi cardiaque est à jour.'},
-                    {'label': 'Entre 3 et 5 ans', 'color': 'orange', 'msg': 'Un contrôle cardiaque pourrait être nécessaire.'},
-                    {'label': 'Plus de 5 ans', 'color': 'red', 'msg': 'Le suivi cardiaque n’est pas à jour. Un avis spécialisé est recommandé.'},
-                  ]),
+            _construireSection('monitoring.mod_cardio'.tr(), [
+              _passerelle('q6_1', 'monitoring.q6_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
+              if (reponses['q6_1'] == 'yes') ...[
+                _passerelle('q6_2', 'monitoring.q6_2'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+                if (reponses['q6_2'] == 'yes') ...[
+                  _score('q6_3', 'monitoring.q6_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+                  _score('q6_4', 'monitoring.q6_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_3y'.tr()}]),
+                ] else ...[
+                  _score('q6_5', 'monitoring.q6_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
+                  _score('q6_6', 'monitoring.q6_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.3_5y'.tr()}, {'id': 'red', 'l': 'monitoring.more_5y'.tr()}]),
                 ]
-              ]
-            ]),
+              ],
+            _buildModuleConclusion(['q6_1', 'q6_2', 'q6_3', 'q6_4', 'q6_5', 'q6_6']), 
+            ], 'key_cardio'),
 
-          _construireSection('🦷 Module Dentaire', [
+          // --- MODULE 7 : DENTAIRE ---
+          _construireSection('monitoring.mod_dentaire'.tr(), [
             if (widget.agePatient <= 6)
-              _scoreBloc('q7_1', 'Un panoramique dentaire a-t-il déjà été réalisé ?', [
-                {'label': 'Oui', 'color': 'green', 'msg': 'Votre suivi dentaire est à jour.'},
-                {'label': 'Non / Jamais', 'color': 'orange', 'msg': 'Une consultation dentaire est recommandée.'},
-              ]),
-            _scoreBloc('q7_2', 'Depuis quand date la dernière consultation chez le dentiste ?', [
-              {'label': 'Moins de 6 mois', 'color': 'green', 'msg': 'Votre suivi dentaire est à jour.'},
-              {'label': 'Plus de 6 mois', 'color': 'orange', 'msg': 'Une consultation dentaire est recommandée.'},
-            ]),
-          ]),
-
-          const SizedBox(height: 40),
+              _score('q7_1', 'monitoring.q7_1'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}]),
+            _score('q7_2', 'monitoring.q7_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_6m'.tr()}, {'id': 'orange', 'l': 'monitoring.more_6m'.tr()}]),
+          _buildModuleConclusion(['q7_1', 'q7_2']), 
+          ], 'key_dentaire'),
+          const SizedBox(height: 50),
         ],
       ),
     );
   }
 
-  // ==========================================
-  // OUTILS DE DESIGN DU QUESTIONNAIRE
-  // ==========================================
-  Widget _construireSection(String titre, List<Widget> questions) {
+  // --- WIDGETS AUXILIAIRES ---
+  Widget _buildHeader() {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12), elevation: 1, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ExpansionTile(title: Text(titre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Color(0xFF335061))), childrenPadding: const EdgeInsets.all(16), children: questions),
-    );
-  }
-
-  // Question "Passerelle" (Oui/Non) : Sauvegarde la chaîne brute et ne génère pas de message en dessous.
-  Widget _passerelleBloc(String itemKey, String question, List<String> options) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(question, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 10, runSpacing: 10,
-            children: options.map((opt) {
-              bool estSelectionne = reponses[itemKey] == opt;
-              return InkWell(
-                onTap: () { setState(() { reponses[itemKey] = opt; }); _calculerScoreEtAlertes(); },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(color: estSelectionne ? Colors.teal.shade50 : Colors.white, border: Border.all(color: estSelectionne ? Colors.teal : Colors.grey.shade300, width: estSelectionne ? 2 : 1), borderRadius: BorderRadius.circular(8)),
-                  child: Text(opt, style: TextStyle(fontWeight: estSelectionne ? FontWeight.bold : FontWeight.normal, color: estSelectionne ? Colors.teal : Colors.black87)),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: primaryTeal.withOpacity(0.3))),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("monitoring.intro_text".tr(), style: const TextStyle(fontSize: 14)),
+            InkWell(
+              onTap: () => launchUrl(Uri.parse('https://www.has-sante.fr/jcms/p_3293728/fr/sclerose-tubereuse-de-bourneville')),
+              child: Text("monitoring.pnds_link".tr(), style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  // Question "Score" : Sauvegarde la couleur et affiche le message patient en dessous.
-  Widget _scoreBloc(String itemKey, String question, List<Map<String, dynamic>> options) {
-    String? reponseActuelle = reponses[itemKey];
-    String? messageAffiche;
-    if (reponseActuelle != null) {
-      messageAffiche = options.firstWhere((o) => o['color'] == reponseActuelle, orElse: () => {'msg': ''})['msg'];
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(question, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          ...options.map((opt) {
-            String couleurOpt = opt['color'];
-            bool estSelectionne = reponseActuelle == couleurOpt;
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: InkWell(
-                onTap: () { setState(() { reponses[itemKey] = couleurOpt; }); _calculerScoreEtAlertes(); },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(color: estSelectionne ? Colors.teal.shade50 : Colors.transparent, border: Border.all(color: estSelectionne ? Colors.teal : Colors.grey.shade300, width: estSelectionne ? 2 : 1), borderRadius: BorderRadius.circular(8)),
-                  child: Row(
-                    children: [
-                      Icon(estSelectionne ? Icons.radio_button_checked : Icons.radio_button_unchecked, color: estSelectionne ? Colors.teal : Colors.grey),
-                      const SizedBox(width: 12),
-                      Expanded(child: Text(opt['label'], style: TextStyle(fontSize: 13, fontWeight: estSelectionne ? FontWeight.bold : FontWeight.normal))),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-          if (reponseActuelle != null && messageAffiche != null && messageAffiche.isNotEmpty) ...[
+  Widget _buildJaugeCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Text('monitoring.score_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+            CircularProgressIndicator(value: scoreTsCare == -1 ? 0 : scoreTsCare, color: _getScoreColor(), strokeWidth: 10),
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: reponseActuelle == 'green' ? Colors.green.shade50 : (reponseActuelle == 'orange' ? Colors.orange.shade50 : Colors.red.shade50), borderRadius: BorderRadius.circular(8)),
-              child: Row(
-                children: [
-                  Icon(reponseActuelle == 'green' ? Icons.check_circle : (reponseActuelle == 'orange' ? Icons.info_outline : Icons.error), color: reponseActuelle == 'green' ? Colors.green : (reponseActuelle == 'orange' ? Colors.orange : Colors.red)),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(messageAffiche, style: TextStyle(fontSize: 13, color: Colors.grey.shade800))),
-                ],
-              ),
-            )
-          ]
-        ],
+            Text(scoreTsCare == -1 ? '--%' : '${(scoreTsCare * 100).round()}%', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _getScoreColor())),
+            const SizedBox(height: 10),
+            Text(_getInterpretation(), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: _getScoreColor())),
+            if (avertissements.isNotEmpty || alertePrioritaire) ...[
+              const Divider(height: 30),
+              Text("monitoring.vigilance_title".tr(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
+              ...avertissements.map((a) => Text("• ${a['message']}", style: const TextStyle(fontSize: 12))),
+              if (alertePrioritaire) Text("• ${'monitoring.vigilance_critical'.tr()}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red)),
+            ]
+          ],
+        ),
       ),
     );
+  }
+
+  Widget _construireSection(String t, List<Widget> q, String k) {
+    return Card(margin: const EdgeInsets.only(bottom: 12), child: ExpansionTile(key: PageStorageKey(k), title: Text(t, style: const TextStyle(fontWeight: FontWeight.bold)), childrenPadding: const EdgeInsets.all(16), children: q));
+  }
+
+  Widget _passerelle(String k, String q, List<Map<String, String>> opts) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(q, style: const TextStyle(fontWeight: FontWeight.bold)),
+      Wrap(spacing: 10, children: opts.map((o) => ChoiceChip(label: Text(o['l']!), selected: reponses[k] == o['id'], onSelected: (s) { setState(() { reponses[k] = o['id']!; _calculerScoreEtAlertes(); }); })).toList()),
+      const SizedBox(height: 20),
+    ]);
+  }
+
+  Widget _score(String k, String q, List<Map<String, String>> opts) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(q, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ...opts.map((o) => RadioListTile<String>(title: Text(o['l']!), value: o['id']!, groupValue: reponses[k], onChanged: (v) { setState(() { reponses[k] = v!; _calculerScoreEtAlertes(); }); })),
+      const SizedBox(height: 20),
+    ]);
   }
 }
 
