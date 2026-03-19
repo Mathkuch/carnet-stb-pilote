@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'dart:typed_data';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 
 // ==========================================
@@ -1499,14 +1500,82 @@ class _PageMonSuiviState extends State<PageMonSuivi> {
   // ==========================================
   // INTERFACE UTILISATEUR (UI)
   // ==========================================
-  @override
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(title: const Text('Mon Suivi (Score TS-CARE)'), backgroundColor: Theme.of(context).colorScheme.inversePrimary),
+      appBar: AppBar(
+        title: const Text('Mon Suivi (Indice TS-CARE)'), 
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
+          
+          // --- NOUVEL EN-TÊTE PÉDAGOGIQUE (PNDS) ---
+          Card(
+            elevation: 0,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: primaryTeal.withOpacity(0.3))
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.verified_user, color: primaryTeal, size: 28),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Aide au suivi personnalisé",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: darkNavy),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Cet outil n'est pas un dispositif médical mais un guide interactif. "
+                    "Il a été conçu pour vous aider à vérifier si votre suivi est en accord avec les recommandations officielles du ",
+                    style: TextStyle(fontSize: 14, color: Colors.black87, height: 1.4),
+                  ),
+                  GestureDetector(
+                    onTap: () async {
+                      final Uri url = Uri.parse('https://www.has-sante.fr/jcms/p_3293728/fr/sclerose-tubereuse-de-bourneville');
+                      if (!await launchUrl(url)) {
+                        throw Exception('Could not launch $url');
+                      }
+                    },
+                    child: Text(
+                      "PNDS (Protocole National de Diagnostic et de Soins).",
+                      style: TextStyle(
+                        fontSize: 14,  
+                        fontWeight: FontWeight.bold
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    "Répondez aux questions pour générer votre indice TS-CARE et identifier les points de vigilance à aborder avec votre équipe médicale.",
+                    style: TextStyle(fontSize: 14, color: Colors.black54, fontStyle: FontStyle.italic),
+                  ),
+                  const SizedBox(height: 5),
+                  InkWell(
+                    onTap: () => launchUrl(Uri.parse('https://www.has-sante.fr/jcms/p_3293728/fr/sclerose-tubereuse-de-bourneville')),
+                    child: Text(
+                      "👉 Pour en savoir plus, consulter la fiche HAS",
+                      style: TextStyle(fontSize: 13, color: Colors.blue.shade700, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           
           // --- 1. JAUGE TS-CARE ---
           Card(
