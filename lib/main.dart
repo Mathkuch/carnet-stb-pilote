@@ -1310,386 +1310,10 @@ class _PageDepistageTANDState extends State<PageDepistageTAND> {
     ); 
   }
 }
-// ==========================================
-// PAGE : MON SUIVI (SCORE TS-CARE INTERACTIF & PUBLIABLE)
-// ==========================================
 
-class PageMonSuivi extends StatefulWidget {
-  final String nomPatient;
-  final int agePatient;
-  final String sexePatient;
 
-  const PageMonSuivi({
-    super.key,
-    required this.nomPatient,
-    required this.agePatient,
-    required this.sexePatient,
-  });
 
-  @override
-  State<PageMonSuivi> createState() => _PageMonSuiviState();
-}
 
-class _PageMonSuiviState extends State<PageMonSuivi> {
-  Map<String, String> reponses = {};
-
-  static const Map<String, int> poidsDomaine = {
-    'neuro': 3, 'nephro': 3, 'pneumo': 3, 'tand': 2, 'cardio': 2, 'ophtalmo': 1, 'dermato': 1, 'dentaire': 1,
-  };
-
-  double scoreTsCare = -1.0;
-  bool alertePrioritaire = false;
-  List<Map<String, String>> avertissements = [];
-
-  void _calculerScoreEtAlertes() {
-    double scoreNeuro = 0; int nNeuro = 0;
-    double scoreTand = 0; int nTand = 0;
-    double scoreNephro = 0; int nNephro = 0;
-    double scoreDermato = 0; int nDermato = 0;
-    double scorePneumo = 0; int nPneumo = 0;
-    double scoreOphtalmo = 0; int nOphtalmo = 0;
-    double scoreCardio = 0; int nCardio = 0;
-    double scoreDentaire = 0; int nDentaire = 0;
-
-    avertissements.clear();
-    alertePrioritaire = false;
-
-    void ajouterPoint(String domaine, String? id) {
-      if (id == null) return;
-      double pt = (id == 'green') ? 1.0 : ((id == 'orange') ? 0.5 : 0.0);
-      switch (domaine) {
-        case 'neuro': scoreNeuro += pt; nNeuro++; break;
-        case 'tand': scoreTand += pt; nTand++; break;
-        case 'nephro': scoreNephro += pt; nNephro++; break;
-        case 'dermato': scoreDermato += pt; nDermato++; break;
-        case 'pneumo': scorePneumo += pt; nPneumo++; break;
-        case 'ophtalmo': scoreOphtalmo += pt; nOphtalmo++; break;
-        case 'cardio': scoreCardio += pt; nCardio++; break;
-        case 'dentaire': scoreDentaire += pt; nDentaire++; break;
-      }
-    }
-
-    // --- 1. NEUROLOGIE ---
-    if (reponses['q1_1'] == 'yes') {
-      ajouterPoint('neuro', reponses['q1_2']);
-      if (reponses['q1_2'] == 'orange') avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_eeg'.tr()});
-    }
-    if (widget.agePatient <= 25) ajouterPoint('tand', reponses['q1_3']); else ajouterPoint('tand', reponses['q1_4']);
-    ajouterPoint('neuro', reponses['q1_5']);
-    if (reponses['q1_5'] == 'red') alertePrioritaire = true;
-
-    // --- 2. NÉPHROLOGIE ---
-    ajouterPoint('nephro', reponses['q2_2']);
-    if (reponses['q2_2'] == 'red') alertePrioritaire = true;
-    ajouterPoint('nephro', reponses['q2_3']);
-    ajouterPoint('nephro', reponses['q2_4']);
-
-    // --- 3. DERMATOLOGIE ---
-    if (reponses['q3_1'] == 'yes') {
-      ajouterPoint('dermato', 'orange');
-      avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_dermato'.tr()});
-    } else if (reponses['q3_1'] == 'no') {
-      ajouterPoint('dermato', 'green');
-    }
-
-    // --- 4. PNEUMOLOGIE (>= 18 ans) ---
-    if (widget.agePatient >= 18) {
-      bool isFemme = widget.sexePatient.toLowerCase().contains('fem');
-      if (isFemme) ajouterPoint('pneumo', reponses['q4_1']);
-      else {
-        ajouterPoint('pneumo', reponses['q4_2']);
-        if (reponses['q4_2'] == 'orange') alertePrioritaire = true;
-      }
-
-      if (reponses['q4_3'] == 'yes') {
-        ajouterPoint('pneumo', reponses['q4_4']);
-        if (reponses['q4_4'] == 'red') alertePrioritaire = true;
-        ajouterPoint('pneumo', reponses['q4_5']);
-        ajouterPoint('pneumo', reponses['q4_6']);
-      } else if (reponses['q4_3'] == 'no') {
-        ajouterPoint('pneumo', reponses['q4_7']);
-        if (reponses['q4_7'] == 'red') alertePrioritaire = true;
-      } else if (reponses['q4_3'] == 'unknown') {
-        avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_pneumo_doc'.tr()});
-      }
-    }
-
-    // --- 5. OPHTALMOLOGIE ---
-    if (reponses['q5_1'] == 'yes') ajouterPoint('ophtalmo', reponses['q5_2']);
-    else if (reponses['q5_1'] == 'no') ajouterPoint('ophtalmo', 'green');
-
-    // --- 6. CARDIOLOGIE (< 12 ans) ---
-    if (widget.agePatient < 12) {
-      if (reponses['q6_1'] == 'unknown') avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_cardio_init'.tr()});
-      if (reponses['q6_1'] == 'yes') {
-        if (reponses['q6_2'] == 'yes') {
-          ajouterPoint('cardio', reponses['q6_3']); ajouterPoint('cardio', reponses['q6_4']);
-        } else {
-          ajouterPoint('cardio', reponses['q6_5']); ajouterPoint('cardio', reponses['q6_6']);
-        }
-      } else if (reponses['q6_1'] == 'no') ajouterPoint('cardio', 'green');
-    }
-
-    // --- 7. DENTAIRE ---
-    if (widget.agePatient <= 6) ajouterPoint('dentaire', reponses['q7_1']);
-    ajouterPoint('dentaire', reponses['q7_2']);
-
-    double totalScore = 0; int totalPoids = 0;
-    void appliquerPoids(String domaine, double score, int nItems) {
-      if (nItems > 0) {
-        totalScore += (score / nItems) * poidsDomaine[domaine]!;
-        totalPoids += poidsDomaine[domaine]!;
-      }
-    }
-    appliquerPoids('neuro', scoreNeuro, nNeuro); appliquerPoids('tand', scoreTand, nTand);
-    appliquerPoids('nephro', scoreNephro, nNephro); appliquerPoids('dermato', scoreDermato, nDermato);
-    appliquerPoids('pneumo', scorePneumo, nPneumo); appliquerPoids('ophtalmo', scoreOphtalmo, nOphtalmo);
-    appliquerPoids('cardio', scoreCardio, nCardio); appliquerPoids('dentaire', scoreDentaire, nDentaire);
-
-    setState(() { scoreTsCare = totalPoids == 0 ? -1.0 : totalScore / totalPoids; });
-  }
-
-  String _getInterpretation() {
-    if (scoreTsCare == -1.0) return 'monitoring.interpretation'.tr();
-    if (scoreTsCare >= 0.85) return 'tscare.score_optimal'.tr();
-    if (scoreTsCare >= 0.60) return 'tscare.score_satisfactory'.tr();
-    return 'tscare.score_insufficient'.tr();
-  }
-
-  Widget _buildModuleConclusion(List<String> questionsLiees) {
-    // On récupère les questions qui ne sont pas "green"
-    List<String> problemes = questionsLiees.where((q) => 
-      reponses.containsKey(q) && reponses[q] != 'green' && reponses[q] != 'yes'
-    ).toList();
-
-    if (problemes.isEmpty && !questionsLiees.any((q) => reponses.containsKey(q))) {
-      return const SizedBox.shrink();
-    }
-
-    bool isOk = problemes.isEmpty;
-    bool isCritical = questionsLiees.any((q) => reponses[q] == 'red');
-
-    return Container(
-      margin: const EdgeInsets.only(top: 20),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isOk ? Colors.green.withOpacity(0.05) : (isCritical ? Colors.red.withOpacity(0.05) : Colors.orange.withOpacity(0.05)),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isOk ? Colors.green : (isCritical ? Colors.red : Colors.orange), width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Ligne de statut
-          Row(
-            children: [
-              Icon(isOk ? Icons.check_circle : Icons.info, color: isOk ? Colors.green : (isCritical ? Colors.red : Colors.orange)),
-              const SizedBox(width: 10),
-              Text(
-                isOk ? "monitoring.conclusion_ok".tr() : "monitoring.conclusion_warning".tr(),
-                style: TextStyle(fontWeight: FontWeight.bold, color: isOk ? Colors.green : (isCritical ? Colors.red : Colors.orange)),
-              ),
-            ],
-          ),
-          
-          // Détail des actions si non conforme
-          if (!isOk) ...[
-            const SizedBox(height: 12),
-            Text("monitoring.medical_advice_title".tr(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 5),
-            ...problemes.map((q) => Padding(
-              padding: const EdgeInsets.only(left: 8, top: 4),
-              child: Text("• ${('monitoring.action_' + q).tr()}", style: const TextStyle(fontSize: 13)),
-            )),
-            const Divider(height: 25),
-            // Phrase de prudence
-            Text(
-              "monitoring.disclaimer_text".tr(),
-              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.black54),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Color _getScoreColor() {
-    if (scoreTsCare == -1.0) return Colors.grey;
-    if (scoreTsCare >= 0.85) return Colors.green;
-    if (scoreTsCare >= 0.60) return Colors.lightGreen;
-    if (scoreTsCare >= 0.40) return Colors.orange;
-    return Colors.red;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(title: Text('monitoring.page_title'.tr())),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildHeader(),
-          const SizedBox(height: 20),
-          _buildJaugeCard(),
-          const SizedBox(height: 20),
-
-          // --- MODULE 1 : NEURO ---
-          _construireSection('monitoring.mod_neuro'.tr(), [
-            _passerelle('q1_1', 'monitoring.q1_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
-            if (reponses['q1_1'] == 'yes')
-              _score('q1_2', 'monitoring.q1_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
-            if (widget.agePatient <= 25)
-              _score('q1_3', 'monitoring.q1_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}])
-            else
-              _score('q1_4', 'monitoring.q1_3'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}]),
-            _score('q1_5', 'monitoring.q1_5'.tr(), widget.agePatient <= 25 
-              ? [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]
-              : [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_3y'.tr()}]),
-            _buildModuleConclusion(['q1_2', 'q1_3', 'q1_5']), 
-            ], 'key_neuro'),
-
-          // --- MODULE 2 : NEPHRO ---
-          _construireSection('monitoring.mod_nephro'.tr(), [
-            _passerelle('q2_1', 'monitoring.q2_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
-            _score('q2_2', 'monitoring.q2_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
-            _score('q2_3', 'monitoring.q2_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
-            _score('q2_4', 'monitoring.q2_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
-            _buildModuleConclusion(['q2_1', 'q2_2', 'q2_3','q2_4']), 
-            ], 'key_nephro'),
-
-          // --- MODULE 3 : DERMATO ---
-          _construireSection('monitoring.mod_dermato'.tr(), [
-            _passerelle('q3_1', 'monitoring.q3_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
-            _buildModuleConclusion(['q3_1']),  
-            ], 'key_dermato'),
-
-          // --- MODULE 4 : PNEUMO (Branchements complexes) ---
-          if (widget.agePatient >= 18)
-            _construireSection('monitoring.mod_pneumo'.tr(), [
-              if (widget.sexePatient.toLowerCase().contains('fem')) 
-                _score('q4_1', 'monitoring.q4_1'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}])
-              else 
-                _score('q4_2', 'monitoring.q4_2'.tr(), [{'id': 'orange', 'l': 'global.yes'.tr()}, {'id': 'green', 'l': 'global.no'.tr()}]),
-              
-              _passerelle('q4_3', 'monitoring.q4_3'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
-              
-              if (reponses['q4_3'] == 'yes') ...[
-                _score('q4_4', 'monitoring.q4_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_2y'.tr()}, {'id': 'orange', 'l': 'monitoring.2_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
-                _score('q4_5', 'monitoring.q4_5'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
-                _score('q4_6', 'monitoring.q4_6'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
-              ] else if (reponses['q4_3'] == 'no') ...[
-                _score('q4_7', 'monitoring.q4_7'.tr(), [{'id': 'green', 'l': 'monitoring.less_5y'.tr()}, {'id': 'orange', 'l': 'monitoring.5_10y'.tr()}, {'id': 'red', 'l': 'monitoring.more_10y'.tr()}]),
-              ],
-            _buildModuleConclusion(['q4_1', 'q4_2', 'q4_3', 'q4_2', 'q4_4', 'q4_5', 'q4_6', 'q4_7']), 
-            ], 'key_pneumo'),
-
-          // --- MODULE 5 : OPHTALMO ---
-          _construireSection('monitoring.mod_ophtalmo'.tr(), [
-            _passerelle('q5_1', 'monitoring.q5_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
-            if (reponses['q5_1'] == 'yes')
-              _score('q5_2', 'monitoring.q5_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
-            _buildModuleConclusion(['q5_1', 'q5_2']), 
-           ], 'key_ophtalmo'),
-
-          // --- MODULE 6 : CARDIO (< 12 ans) ---
-          if (widget.agePatient < 12)
-            _construireSection('monitoring.mod_cardio'.tr(), [
-              _passerelle('q6_1', 'monitoring.q6_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
-              if (reponses['q6_1'] == 'yes') ...[
-                _passerelle('q6_2', 'monitoring.q6_2'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
-                if (reponses['q6_2'] == 'yes') ...[
-                  _score('q6_3', 'monitoring.q6_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
-                  _score('q6_4', 'monitoring.q6_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_3y'.tr()}]),
-                ] else ...[
-                  _score('q6_5', 'monitoring.q6_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
-                  _score('q6_6', 'monitoring.q6_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.3_5y'.tr()}, {'id': 'red', 'l': 'monitoring.more_5y'.tr()}]),
-                ]
-              ],
-            _buildModuleConclusion(['q6_1', 'q6_2', 'q6_3', 'q6_4', 'q6_5', 'q6_6']), 
-            ], 'key_cardio'),
-
-          // --- MODULE 7 : DENTAIRE ---
-          _construireSection('monitoring.mod_dentaire'.tr(), [
-            if (widget.agePatient <= 6)
-              _score('q7_1', 'monitoring.q7_1'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}]),
-            _score('q7_2', 'monitoring.q7_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_6m'.tr()}, {'id': 'orange', 'l': 'monitoring.more_6m'.tr()}]),
-          _buildModuleConclusion(['q7_1', 'q7_2']), 
-          ], 'key_dentaire'),
-          const SizedBox(height: 50),
-        ],
-      ),
-    );
-  }
-
-  // --- WIDGETS AUXILIAIRES ---
-  Widget _buildHeader() {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: primaryTeal.withOpacity(0.3))),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("monitoring.intro_text".tr(), style: const TextStyle(fontSize: 14)),
-            InkWell(
-              onTap: () => launchUrl(Uri.parse('https://www.has-sante.fr/jcms/p_3293728/fr/sclerose-tubereuse-de-bourneville')),
-              child: Text("monitoring.pnds_link".tr(), style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildJaugeCard() {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text('monitoring.score_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 15),
-            CircularProgressIndicator(value: scoreTsCare == -1 ? 0 : scoreTsCare, color: _getScoreColor(), strokeWidth: 10),
-            const SizedBox(height: 10),
-            Text(scoreTsCare == -1 ? '--%' : '${(scoreTsCare * 100).round()}%', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _getScoreColor())),
-            const SizedBox(height: 10),
-            Text(_getInterpretation(), textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: _getScoreColor())),
-            if (avertissements.isNotEmpty || alertePrioritaire) ...[
-              const Divider(height: 30),
-              Text("monitoring.vigilance_title".tr(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange)),
-              ...avertissements.map((a) => Text("• ${a['message']}", style: const TextStyle(fontSize: 12))),
-              if (alertePrioritaire) Text("• ${'monitoring.vigilance_critical'.tr()}", style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red)),
-            ]
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _construireSection(String t, List<Widget> q, String k) {
-    return Card(margin: const EdgeInsets.only(bottom: 12), child: ExpansionTile(key: PageStorageKey(k), title: Text(t, style: const TextStyle(fontWeight: FontWeight.bold)), childrenPadding: const EdgeInsets.all(16), children: q));
-  }
-
-  Widget _passerelle(String k, String q, List<Map<String, String>> opts) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(q, style: const TextStyle(fontWeight: FontWeight.bold)),
-      Wrap(spacing: 10, children: opts.map((o) => ChoiceChip(label: Text(o['l']!), selected: reponses[k] == o['id'], onSelected: (s) { setState(() { reponses[k] = o['id']!; _calculerScoreEtAlertes(); }); })).toList()),
-      const SizedBox(height: 20),
-    ]);
-  }
-
-  Widget _score(String k, String q, List<Map<String, String>> opts) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(q, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ...opts.map((o) => RadioListTile<String>(title: Text(o['l']!), value: o['id']!, groupValue: reponses[k], onChanged: (v) { setState(() { reponses[k] = v!; _calculerScoreEtAlertes(); }); })),
-      const SizedBox(height: 20),
-    ]);
-  }
-}
 
 // ==========================================
 // PAGE : COMPRENDRE LA STB
@@ -2725,4 +2349,399 @@ class _PageMesCrisesState extends State<PageMesCrises> {
 
   String _genererConclusionClinique() { return (periodeSelectionnee == '1S' || periodeSelectionnee == '1M') ? "L'augmentation du Sabril effectuee il y a 15 jours semble avoir rapidement stabilise la frequence des crises." : "L'arret de la Micropakine et l'introduction de l'Urbanyl (il y a 3 mois) sont correles a une baisse tres nette des crises tonico-cloniques."; }
   Widget _legende(Color couleur, String texte) { return Row(mainAxisSize: MainAxisSize.min, children: [Container(width: 12, height: 12, decoration: BoxDecoration(color: couleur, borderRadius: BorderRadius.circular(3))), const SizedBox(width: 4), Text(texte, style: const TextStyle(fontSize: 12))]); }
+}
+
+// ==========================================
+// PAGE : MON SUIVI (SCORE TS-CARE INTERACTIF & PUBLIABLE)
+// ==========================================
+
+class PageMonSuivi extends StatefulWidget {
+  final String nomPatient;
+  final int agePatient;
+  final String sexePatient;
+
+  const PageMonSuivi({
+    super.key,
+    required this.nomPatient,
+    required this.agePatient,
+    required this.sexePatient,
+  });
+
+  @override
+  State<PageMonSuivi> createState() => _PageMonSuiviState();
+}
+
+class _PageMonSuiviState extends State<PageMonSuivi> {
+  Map<String, String> reponses = {};
+
+  // Poids des domaines : 'dermato' est retiré pour ne pas impacter le score global
+  static const Map<String, int> poidsDomaine = {
+    'neuro': 3, 'nephro': 3, 'pneumo': 3, 'tand': 2, 'cardio': 2, 'ophtalmo': 1, 'dentaire': 1,
+  };
+
+  double scoreTsCare = -1.0;
+  bool alertePrioritaire = false;
+  List<Map<String, String>> avertissements = [];
+
+  // ==========================================
+  // MOTEUR ALGORITHMIQUE (PNDS)
+  // ==========================================
+  void _calculerScoreEtAlertes() {
+    double scoreNeuro = 0; int nNeuro = 0;
+    double scoreTand = 0; int nTand = 0;
+    double scoreNephro = 0; int nNephro = 0;
+    double scorePneumo = 0; int nPneumo = 0;
+    double scoreOphtalmo = 0; int nOphtalmo = 0;
+    double scoreCardio = 0; int nCardio = 0;
+    double scoreDentaire = 0; int nDentaire = 0;
+
+    avertissements.clear();
+    alertePrioritaire = false;
+
+    void ajouterPoint(String domaine, String? id) {
+      if (id == null) return;
+      double pt = (id == 'green') ? 1.0 : ((id == 'orange') ? 0.5 : 0.0);
+      switch (domaine) {
+        case 'neuro': scoreNeuro += pt; nNeuro++; break;
+        case 'tand': scoreTand += pt; nTand++; break;
+        case 'nephro': scoreNephro += pt; nNephro++; break;
+        case 'pneumo': scorePneumo += pt; nPneumo++; break;
+        case 'ophtalmo': scoreOphtalmo += pt; nOphtalmo++; break;
+        case 'cardio': scoreCardio += pt; nCardio++; break;
+        case 'dentaire': scoreDentaire += pt; nDentaire++; break;
+      }
+    }
+
+    // --- 1. NEUROLOGIE ---
+    if (reponses['q1_1'] == 'yes') {
+      ajouterPoint('neuro', reponses['q1_2']);
+      if (reponses['q1_2'] == 'orange') avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_eeg'.tr()});
+    }
+    if (widget.agePatient <= 25) ajouterPoint('tand', reponses['q1_3']); else ajouterPoint('tand', reponses['q1_4']);
+    ajouterPoint('neuro', reponses['q1_5']);
+    if (reponses['q1_5'] == 'red') alertePrioritaire = true;
+
+    // --- 2. NÉPHROLOGIE ---
+    ajouterPoint('nephro', reponses['q2_2']);
+    if (reponses['q2_2'] == 'red') alertePrioritaire = true;
+    ajouterPoint('nephro', reponses['q2_3']);
+    ajouterPoint('nephro', reponses['q2_4']);
+
+    // --- 3. DERMATOLOGIE (Conseil uniquement, pas de poids score) ---
+    if (reponses['q3_1'] == 'yes') avertissements.add({'couleur': 'orange', 'message': 'monitoring.warn_dermato'.tr()});
+
+    // --- 4. PNEUMOLOGIE ---
+    if (widget.agePatient >= 18) {
+      bool isFemme = widget.sexePatient.toLowerCase().startsWith('f');
+      if (isFemme) ajouterPoint('pneumo', reponses['q4_1']);
+      else {
+        ajouterPoint('pneumo', reponses['q4_2']);
+        if (reponses['q4_2'] == 'orange') alertePrioritaire = true;
+      }
+      if (reponses['q4_3'] == 'yes') {
+        ajouterPoint('pneumo', reponses['q4_4']);
+        if (reponses['q4_4'] == 'red') alertePrioritaire = true;
+        ajouterPoint('pneumo', reponses['q4_5']);
+        ajouterPoint('pneumo', reponses['q4_6']);
+      } else if (reponses['q4_3'] == 'no') {
+        ajouterPoint('pneumo', reponses['q4_7']);
+        if (reponses['q4_7'] == 'red') alertePrioritaire = true;
+      }
+    }
+
+    // --- 5. OPHTALMOLOGIE (Vert par défaut si pas de lésion) ---
+    if (reponses['q5_1'] == 'no') ajouterPoint('ophtalmo', 'green');
+    else if (reponses['q5_1'] == 'yes') ajouterPoint('ophtalmo', reponses['q5_2']);
+
+    // --- 6. CARDIOLOGIE (Vert par défaut si pas de rhabdomyome) ---
+    if (widget.agePatient < 12) {
+      if (reponses['q6_1'] == 'no') ajouterPoint('cardio', 'green');
+      else if (reponses['q6_1'] == 'yes') {
+        if (reponses['q6_2'] == 'yes') {
+          ajouterPoint('cardio', reponses['q6_3']); ajouterPoint('cardio', reponses['q6_4']);
+        } else {
+          ajouterPoint('cardio', reponses['q6_5']); ajouterPoint('cardio', reponses['q6_6']);
+        }
+      }
+    }
+
+    // --- 7. DENTAIRE ---
+    if (widget.agePatient <= 6) ajouterPoint('dentaire', reponses['q7_1']);
+    ajouterPoint('dentaire', reponses['q7_2']);
+
+    // --- CALCUL FINAL ---
+    double totalScore = 0; int totalPoids = 0;
+    void appliquerPoids(String domaine, double score, int nItems) {
+      if (nItems > 0) {
+        totalScore += (score / nItems) * poidsDomaine[domaine]!;
+        totalPoids += poidsDomaine[domaine]!;
+      }
+    }
+
+    appliquerPoids('neuro', scoreNeuro, nNeuro);
+    appliquerPoids('tand', scoreTand, nTand);
+    appliquerPoids('nephro', scoreNephro, nNephro);
+    appliquerPoids('pneumo', scorePneumo, nPneumo);
+    appliquerPoids('ophtalmo', scoreOphtalmo, nOphtalmo);
+    appliquerPoids('cardio', scoreCardio, nCardio);
+    appliquerPoids('dentaire', scoreDentaire, nDentaire);
+
+    setState(() { scoreTsCare = totalPoids == 0 ? -1.0 : totalScore / totalPoids; });
+  }
+
+  // ==========================================
+  // LOGIQUE D'AFFICHAGE & TRADUCTION
+  // ==========================================
+
+  String _getInterpretation() {
+    if (scoreTsCare == -1.0) return 'monitoring.interpretation'.tr();
+    if (scoreTsCare >= 0.85) return 'monitoring.score_optimal'.tr();
+    if (scoreTsCare >= 0.60) return 'monitoring.score_satisfactory'.tr();
+    return 'monitoring.score_insufficient'.tr();
+  }
+
+  Color _getScoreColor() {
+    if (scoreTsCare == -1.0) return Colors.grey;
+    if (scoreTsCare >= 0.85) return Colors.green;
+    if (scoreTsCare >= 0.60) return Colors.lightGreen;
+    if (scoreTsCare >= 0.40) return Colors.orange;
+    return Colors.red;
+  }
+
+  Widget _buildRecapTableau() {
+    List<Map<String, dynamic>> domaines = [
+      {'nom': 'monitoring.mod_neuro'.tr(), 'q': ['q1_2', 'q1_3', 'q1_5']},
+      {'nom': 'monitoring.mod_nephro'.tr(), 'q': ['q2_2', 'q2_3', 'q2_4']},
+      {'nom': 'monitoring.mod_dermato'.tr(), 'q': ['q3_1']},
+      {'nom': 'monitoring.mod_pneumo'.tr(), 'q': ['q4_4', 'q4_7']},
+      {'nom': 'monitoring.mod_ophtalmo'.tr(), 'q': ['q5_1', 'q5_2']},
+      {'nom': 'monitoring.mod_cardio'.tr(), 'q': ['q6_1', 'q6_3', 'q6_5']},
+      {'nom': 'monitoring.mod_dentaire'.tr(), 'q': ['q7_2']},
+    ];
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('monitoring.recap_title'.tr(), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 15),
+            ...domaines.map((d) {
+              if (!d['q'].any((q) => reponses.containsKey(q))) return const SizedBox.shrink();
+              
+              // Détermination de la pastille (Cardio et Ophtalmo gérés spécifiquement)
+              bool isRed = d['q'].any((q) => reponses[q] == 'red');
+              bool isOrange = d['q'].any((q) => reponses[q] == 'orange');
+              
+              // Cas spécifique : Si pas de rhabdomyome ou pas de lésion ophtalmo, c'est vert
+              if (d['nom'].contains('Ophtalmo') && reponses['q5_1'] == 'no') { isRed = false; isOrange = false; }
+              if (d['nom'].contains('Cardio') && reponses['q6_1'] == 'no') { isRed = false; isOrange = false; }
+
+              Color col = isRed ? Colors.red : (isOrange ? Colors.orange : Colors.green);
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Icon(Icons.circle, size: 10, color: col),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(d['nom'])),
+                    Text(isRed ? 'monitoring.status_critical'.tr() : (isOrange ? 'monitoring.status_warning'.tr() : 'monitoring.status_compliant'.tr()), 
+                         style: TextStyle(color: col, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              );
+            }).toList(),
+            const Divider(height: 30),
+            Center(child: Text("${(scoreTsCare * 100).round()}% - ${_getInterpretation()}", 
+                         style: TextStyle(fontWeight: FontWeight.bold, color: _getScoreColor(), fontSize: 16))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModuleConclusion(List<String> questionsLiees) {
+    List<String> pointsVigilance = questionsLiees.where((q) {
+      String? res = reponses[q];
+      return res != null && res != 'green' && res != 'yes' && res != 'no';
+    }).toList();
+
+    if (!questionsLiees.any((q) => reponses.containsKey(q))) return const SizedBox.shrink();
+
+    bool isCritical = pointsVigilance.any((q) => reponses[q] == 'red');
+    bool isWarning = pointsVigilance.any((q) => reponses[q] == 'orange');
+    bool isOk = pointsVigilance.isEmpty;
+
+    Color accentColor = isCritical ? Colors.red : (isWarning ? Colors.orange : Colors.green);
+
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentColor, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(isOk ? Icons.check_circle : (isCritical ? Icons.report_problem : Icons.warning_amber), color: accentColor, size: 22),
+              const SizedBox(width: 10),
+              Expanded(child: Text(isOk ? "monitoring.conclusion_ok".tr() : "monitoring.conclusion_warning".tr(), 
+                                   style: TextStyle(fontWeight: FontWeight.bold, color: accentColor))),
+            ],
+          ),
+          if (!isOk) ...[
+            const SizedBox(height: 12),
+            Text("monitoring.medical_advice_title".tr(), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)),
+            const SizedBox(height: 8),
+            ...pointsVigilance.map((id) => Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text("• ${('monitoring.action_' + id).tr()}", style: const TextStyle(fontSize: 13)),
+            )),
+            const Divider(height: 25),
+            Text("monitoring.disclaimer_text".tr(), style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic, color: Colors.black54)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // --- UI CONSTRUCTION ---
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: AppBar(title: Text('monitoring.page_title'.tr())),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          _buildHeader(),
+          const SizedBox(height: 20),
+          _buildRecapTableau(),
+          const SizedBox(height: 20),
+
+          // NEURO
+          _construireSection('monitoring.mod_neuro'.tr(), [
+            _passerelle('q1_1', 'monitoring.q1_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+            if (reponses['q1_1'] == 'yes')
+              _score('q1_2', 'monitoring.q1_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+            if (widget.agePatient <= 25)
+              _score('q1_3', 'monitoring.q1_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}])
+            else
+              _score('q1_4', 'monitoring.q1_3'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}]),
+            _score('q1_5', 'monitoring.q1_5'.tr(), widget.agePatient <= 25 
+              ? [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]
+              : [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_3y'.tr()}]),
+            _buildModuleConclusion(['q1_2', 'q1_3', 'q1_4', 'q1_5']),
+          ], 'key_neuro'),
+
+          // NEPHRO
+          _construireSection('monitoring.mod_nephro'.tr(), [
+            _passerelle('q2_1', 'monitoring.q2_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
+            _score('q2_2', 'monitoring.q2_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
+            _score('q2_3', 'monitoring.q2_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+            _score('q2_4', 'monitoring.q2_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+            _buildModuleConclusion(['q2_2', 'q2_3', 'q2_4']),
+          ], 'key_nephro'),
+
+          // DERMATO
+          _construireSection('monitoring.mod_dermato'.tr(), [
+            _passerelle('q3_1', 'monitoring.q3_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+            if (reponses.containsKey('q3_1'))
+              Container(
+                margin: const EdgeInsets.only(top: 15),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(color: Colors.green.withOpacity(0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.green)),
+                child: Text(reponses['q3_1'] == 'yes' ? "monitoring.conclusion_dermato_oui".tr() : "monitoring.conclusion_dermato_non".tr(), 
+                           style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 13)),
+              ),
+          ], 'key_dermato'),
+
+          // PNEUMO
+          if (widget.agePatient >= 18)
+            _construireSection('monitoring.mod_pneumo'.tr(), [
+              if (widget.sexePatient.toLowerCase().startsWith('f')) 
+                _score('q4_1', 'monitoring.q4_1'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}])
+              else 
+                _score('q4_2', 'monitoring.q4_2'.tr(), [{'id': 'orange', 'l': 'global.yes'.tr()}, {'id': 'green', 'l': 'global.no'.tr()}]),
+              _passerelle('q4_3', 'monitoring.q4_3'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
+              if (reponses['q4_3'] == 'yes') ...[
+                _score('q4_4', 'monitoring.q4_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_2y'.tr()}, {'id': 'orange', 'l': 'monitoring.2_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
+                _score('q4_5', 'monitoring.q4_5'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+                _score('q4_6', 'monitoring.q4_6'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+              ] else if (reponses['q4_3'] == 'no') ...[
+                _score('q4_7', 'monitoring.q4_7'.tr(), [{'id': 'green', 'l': 'monitoring.less_5y'.tr()}, {'id': 'orange', 'l': 'monitoring.5_10y'.tr()}, {'id': 'red', 'l': 'monitoring.more_10y'.tr()}]),
+              ],
+              _buildModuleConclusion(['q4_1', 'q4_2', 'q4_4', 'q4_5', 'q4_6', 'q4_7']),
+            ], 'key_pneumo'),
+
+          // OPHTALMO
+          _construireSection('monitoring.mod_ophtalmo'.tr(), [
+            _passerelle('q5_1', 'monitoring.q5_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+            if (reponses['q5_1'] == 'yes')
+              _score('q5_2', 'monitoring.q5_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+            _buildModuleConclusion(['q5_1', 'q5_2']),
+          ], 'key_ophtalmo'),
+
+          // CARDIO
+          if (widget.agePatient < 12)
+            _construireSection('monitoring.mod_cardio'.tr(), [
+              _passerelle('q6_1', 'monitoring.q6_1'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}, {'id': 'unknown', 'l': 'global.dont_know'.tr()}]),
+              if (reponses['q6_1'] == 'yes') ...[
+                _passerelle('q6_2', 'monitoring.q6_2'.tr(), [{'id': 'yes', 'l': 'global.yes'.tr()}, {'id': 'no', 'l': 'global.no'.tr()}]),
+                if (reponses['q6_2'] == 'yes') ...[
+                  _score('q6_3', 'monitoring.q6_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_1y'.tr()}]),
+                  _score('q6_4', 'monitoring.q6_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.more_3y'.tr()}]),
+                ] else ...[
+                  _score('q6_5', 'monitoring.q6_3'.tr(), [{'id': 'green', 'l': 'monitoring.less_1y'.tr()}, {'id': 'orange', 'l': 'monitoring.1_3y'.tr()}, {'id': 'red', 'l': 'monitoring.more_3y'.tr()}]),
+                  _score('q6_6', 'monitoring.q6_4'.tr(), [{'id': 'green', 'l': 'monitoring.less_3y'.tr()}, {'id': 'orange', 'l': 'monitoring.3_5y'.tr()}, {'id': 'red', 'l': 'monitoring.more_5y'.tr()}]),
+                ]
+              ],
+              _buildModuleConclusion(['q6_1', 'q6_3', 'q6_4', 'q6_5', 'q6_6']),
+            ], 'key_cardio'),
+
+          // DENTAIRE
+          _construireSection('monitoring.mod_dentaire'.tr(), [
+            if (widget.agePatient <= 6)
+              _score('q7_1', 'monitoring.q7_1'.tr(), [{'id': 'green', 'l': 'global.yes'.tr()}, {'id': 'orange', 'l': 'global.no'.tr()}]),
+            _score('q7_2', 'monitoring.q7_2'.tr(), [{'id': 'green', 'l': 'monitoring.less_6m'.tr()}, {'id': 'orange', 'l': 'monitoring.more_6m'.tr()}]),
+            _buildModuleConclusion(['q7_1', 'q7_2']),
+          ], 'key_dentaire'),
+          const SizedBox(height: 50),
+        ],
+      ),
+    );
+  }
+
+  // --- WIDGETS AUXILIAIRES ---
+  Widget _buildHeader() {
+    return Card(elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.teal.withOpacity(0.3))), child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text("monitoring.intro_text".tr(), style: const TextStyle(fontSize: 14)), InkWell(onTap: () => launchUrl(Uri.parse('https://www.has-sante.fr/jcms/p_3293728/fr/sclerose-tubereuse-de-bourneville')), child: Text("monitoring.pnds_link".tr(), style: const TextStyle(color: Colors.teal, fontWeight: FontWeight.bold, decoration: TextDecoration.underline)))])));
+  }
+
+  Widget _construireSection(String t, List<Widget> q, String k) {
+    return Card(margin: const EdgeInsets.only(bottom: 12), child: ExpansionTile(key: PageStorageKey(k), title: Text(t, style: const TextStyle(fontWeight: FontWeight.bold)), childrenPadding: const EdgeInsets.all(16), children: q));
+  }
+
+  Widget _passerelle(String k, String q, List<Map<String, String>> opts) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(q, style: const TextStyle(fontWeight: FontWeight.bold)),
+      Wrap(spacing: 10, children: opts.map((o) => ChoiceChip(label: Text(o['l']!), selected: reponses[k] == o['id'], onSelected: (s) { setState(() { reponses[k] = o['id']!; _calculerScoreEtAlertes(); }); })).toList()),
+      const SizedBox(height: 20),
+    ]);
+  }
+
+  Widget _score(String k, String q, List<Map<String, String>> opts) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text(q, style: const TextStyle(fontWeight: FontWeight.bold)),
+      ...opts.map((o) => RadioListTile<String>(title: Text(o['l']!), value: o['id']!, groupValue: reponses[k], onChanged: (v) { setState(() { reponses[k] = v!; _calculerScoreEtAlertes(); }); })),
+      const SizedBox(height: 20),
+    ]);
+  }
 }

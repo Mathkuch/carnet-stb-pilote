@@ -115,7 +115,18 @@
     "action_q6_5": "Mettre à jour l'échographie cardiaque (suivi rhabdomyome).",
     "action_q6_6": "Mettre à jour l'ECG (suivi rhabdomyome).",
     "action_q7_1": "Réaliser un panoramique dentaire de référence (avant 6 ans).",
-    "action_q7_2": "Prendre un rendez-vous de contrôle chez le dentiste (tous les 6 mois)."
+    "action_q7_2": "Prendre un rendez-vous de contrôle chez le dentiste (tous les 6 mois).",
+    "conclusion_dermato_oui": "✅ Suivi conforme. Une évaluation dermatologique spécialisée est à envisager en cas de douleur, saignement, gêne fonctionnelle, retentissement esthétique ou social.",
+    "conclusion_dermato_non": "✅ Suivi de cet organe conforme aux recommandations.",
+    "3_5y": "Entre 3 et 5 ans",
+    "more_5y": "Plus de 5 ans",
+    "score_optimal": "Suivi excellent",
+    "score_satisfactory": "Suivi globalement satisfaisant",
+    "score_insufficient": "Suivi à renforcer",
+    "recap_title": "Résumé de mon suivi par organe",
+    "status_compliant": "Conforme",
+    "status_warning": "À optimiser",
+    "status_critical": "Urgent"
   },
   "home": {
     "welcome_title": "Bienvenue dans votre Carnet de suivi STB",
