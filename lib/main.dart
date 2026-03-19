@@ -351,9 +351,8 @@ class EcranAccueil extends StatelessWidget {
                 _creerCartePartenaire('assets/logo_astb.jpg', 'ASTB France'),
                 _creerCartePartenaire('assets/logo_defiscience.png', 'Filière DéfiScience'),
                 _creerCartePartenaire('assets/logo_necker.jpg', 'Hôpital Necker-Enfants malades'),
-                _creerCartePartenaire('assets/Logo_CHRUNancy.png', 'CHRU Nancy'),
+                _creerCartePartenaire('assets/logo_CHRUNancy.png', 'CHRU Nancy'),
                 _creerCartePartenaire('assets/logo_CReER.jpg', 'Réseau CReER'),
-                _creerCartePartenaire('assets/bndmr.png', 'BNDMR'),
               ],
             )
           ],
@@ -1823,124 +1822,131 @@ class _PageMonSuiviState extends State<PageMonSuivi> {
 // ==========================================
 // PAGE : COMPRENDRE LA STB
 // ==========================================
-
 class PageComprendreSTB extends StatelessWidget {
   const PageComprendreSTB({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        title: Text('understand_tsc.title'.tr()),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          // En-tête / Introduction rapide
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20.0, top: 10.0),
-            child: Text(
-              'understand_tsc.title'.tr().toUpperCase(),
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-                letterSpacing: 1.2,
+  // Fonction pour ouvrir le détail de l'article
+  void _ouvrirDetail(BuildContext context, String titre, String texte, String image) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.85,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Column(
+          children: [
+            // Barre de fermeture
+            Container(margin: const EdgeInsets.only(top: 12), height: 5, width: 40, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(10))),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(24),
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(15),
+                    child: Image.asset(image, fit: BoxFit.cover, height: 250),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(titre, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: darkNavy)),
+                  const SizedBox(height: 16),
+                  Text(texte, style: const TextStyle(fontSize: 16, height: 1.6, color: Colors.black87), textAlign: TextAlign.justify),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(backgroundColor: primaryTeal, foregroundColor: Colors.white),
+                    child: const Text("Fermer la lecture"),
+                  )
+                ],
               ),
-              textAlign: TextAlign.center,
             ),
-          ),
-
-          // Section 1 : Origine
-          _buildArticleCard(
-            context,
-            imagePath: 'assets/images/principe_stb.jpg',
-            title: 'understand_tsc.sec1_title'.tr(),
-            text: 'understand_tsc.sec1_text'.tr(),
-          ),
-
-          // Section 2 : Transmission
-          _buildArticleCard(
-            context,
-            imagePath: 'assets/images/transmission.jpg',
-            title: 'understand_tsc.sec2_title'.tr(),
-            text: 'understand_tsc.sec2_text'.tr(),
-          ),
-
-          // Section 3 : Variabilité
-          _buildArticleCard(
-            context,
-            imagePath: 'assets/images/variabilite.jpg',
-            title: 'understand_tsc.sec3_title'.tr(),
-            text: 'understand_tsc.sec3_text'.tr(),
-          ),
-
-          // Section 4 : Empowerment / Prise en charge
-          _buildArticleCard(
-            context,
-            imagePath: 'assets/images/empowerment.jpg',
-            title: 'understand_tsc.sec4_title'.tr(),
-            text: 'understand_tsc.sec4_text'.tr(),
-          ),
-          
-          const SizedBox(height: 30),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  // Widget réutilisable pour créer les "Cartes d'articles"
-  Widget _buildArticleCard(BuildContext context, {required String imagePath, required String title, required String text}) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 24.0),
-      elevation: 3,
-      shadowColor: Colors.black26,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // L'image avec les coins arrondis en haut
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.asset(
-              imagePath,
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Le contenu texte
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  @override
+  Widget build(BuildContext context) {
+    double largeurEcran = MediaQuery.of(context).size.width;
+    int nbColonnes = largeurEcran > 900 ? 2 : 1;
+    double ratio = largeurEcran > 900 ? 1.4 : 0.9;
+
+    return Scaffold(
+      backgroundColor: bgColor,
+      appBar: AppBar(title: Text('understand_tsc.title'.tr())),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          children: [
+            // Titre de la page
+            Text('understand_tsc.title'.tr().toUpperCase(), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: darkNavy, letterSpacing: 1.2)),
+            const SizedBox(height: 5),
+            Container(height: 3, width: 50, color: primaryTeal),
+            const SizedBox(height: 30),
+
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: nbColonnes,
+              crossAxisSpacing: 20,
+              mainAxisSpacing: 20,
+              childAspectRatio: ratio,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF335061), // Couleur bleu marine/darkNavy
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  text,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    color: Colors.black87,
-                    height: 1.5, // Interligne pour rendre la lecture agréable
-                  ),
-                  textAlign: TextAlign.justify,
-                ),
+                _buildArticleCard(context, 'understand_tsc.sec1_title'.tr(), 'understand_tsc.sec1_text'.tr(), 'assets/images/principe_stb.jpg'),
+                _buildArticleCard(context, 'understand_tsc.sec2_title'.tr(), 'understand_tsc.sec2_text'.tr(), 'assets/images/transmission.jpg'),
+                _buildArticleCard(context, 'understand_tsc.sec3_title'.tr(), 'understand_tsc.sec3_text'.tr(), 'assets/images/variabilite.jpg'),
+                _buildArticleCard(context, 'understand_tsc.sec4_title'.tr(), 'understand_tsc.sec4_text'.tr(), 'assets/images/empowerment.jpg'),
               ],
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildArticleCard(BuildContext context, String title, String text, String imagePath) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell( // Rends la carte cliquable
+        onTap: () => _ouvrirDetail(context, title, text, imagePath),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              flex: 5,
+              child: Image.asset(imagePath, fit: BoxFit.cover),
+            ),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: darkNavy), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: Text(text, style: TextStyle(fontSize: 13, color: Colors.grey[800], height: 1.3), textAlign: TextAlign.justify, overflow: TextOverflow.ellipsis, maxLines: 3),
+                    ),
+                    const SizedBox(height: 4),
+                    // Le bouton ne s'affiche que visuellement ici car toute la carte est cliquable
+                    Text("Lire la suite...", style: TextStyle(color: primaryTeal, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
 // ==========================================
 // PAGE : FONCTIONNALITÉS À VENIR (WIP)
 // ==========================================
